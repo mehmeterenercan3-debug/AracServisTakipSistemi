@@ -1,11 +1,5 @@
-﻿using AracServisTakipSistemi.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
+using AracServisTakipSistemi.Domain.Entities;
 
 namespace AracServisTakipSistemi.Infrastructure.Data;
 
@@ -14,8 +8,11 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     public DbSet<Personel> Personeller => Set<Personel>();
+    public DbSet<PersonelAdres> PersonelAdresleri => Set<PersonelAdres>();
     public DbSet<Arac> Araclar => Set<Arac>();
     public DbSet<AracArizaKaydi> AracArizaKayitlari => Set<AracArizaKaydi>();
+    public DbSet<BakimKaydi> BakimKayitlari => Set<BakimKaydi>();
+    public DbSet<RiskSkoru> RiskSkorlari => Set<RiskSkoru>();
     public DbSet<AracAtama> AracAtamalari => Set<AracAtama>();
     public DbSet<Rota> Rotalar => Set<Rota>();
     public DbSet<RotaDuragi> RotaDuraklari => Set<RotaDuragi>();
@@ -26,10 +23,25 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<PersonelAdres>()
+            .HasOne(a => a.Personel)
+            .WithMany(p => p.Adresler)
+            .HasForeignKey(a => a.PersonelId);
+
         modelBuilder.Entity<AracArizaKaydi>()
             .HasOne(a => a.Arac)
             .WithMany(v => v.ArizaKayitlari)
             .HasForeignKey(a => a.AracId);
+
+        modelBuilder.Entity<BakimKaydi>()
+            .HasOne(b => b.Arac)
+            .WithMany(a => a.BakimKayitlari)
+            .HasForeignKey(b => b.AracId);
+
+        modelBuilder.Entity<RiskSkoru>()
+            .HasOne(r => r.Arac)
+            .WithMany(a => a.RiskSkorlari)
+            .HasForeignKey(r => r.AracId);
 
         modelBuilder.Entity<AracAtama>()
             .HasOne(a => a.Arac)
@@ -71,6 +83,14 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AracArizaKaydi>()
             .Property(m => m.OnarimMaliyeti)
             .HasPrecision(18, 2);
+
+        modelBuilder.Entity<BakimKaydi>()
+            .Property(b => b.Maliyet)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<RiskSkoru>()
+            .Property(r => r.SkorDegeri)
+            .HasPrecision(5, 2);
 
         modelBuilder.Entity<Vardiya>().HasData(
             new Vardiya { Id = 1, VardiyaAdi = "Sabah", BaslangicSaati = new TimeSpan(8, 30, 0), BitisSaati = new TimeSpan(18, 0, 0) }

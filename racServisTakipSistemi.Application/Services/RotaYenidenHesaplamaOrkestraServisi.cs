@@ -37,7 +37,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
         var aktifAraclar = await _aracServisi.AktifAraclariGetirAsync();
         var aktifVardiyalar = await _vardiyaRepository.AktifleriGetirAsync();
 
-        var sonuc = _rotaHesaplamaServisi.RotalariHesapla(aktifPersoneller, aktifAraclar, aktifVardiyalar);
+        var sonuc =  await _rotaHesaplamaServisi.RotalariHesaplaAsync(aktifPersoneller, aktifAraclar, aktifVardiyalar);
 
         await _aracAtamaServisi.AtamalariUygulaAsync(sonuc);
 

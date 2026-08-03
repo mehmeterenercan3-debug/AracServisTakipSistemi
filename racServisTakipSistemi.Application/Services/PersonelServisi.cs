@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using AracServisTakipSistemi.Application.Interfaces;
+﻿using AracServisTakipSistemi.Application.Interfaces;
 using AracServisTakipSistemi.Domain.Entities;
 
 namespace AracServisTakipSistemi.Application.Services;
@@ -12,11 +6,16 @@ namespace AracServisTakipSistemi.Application.Services;
 public class PersonelServisi
 {
     private readonly IPersonelRepository _repository;
+    private readonly IPersonelAdresRepository _adresRepository;
     private readonly IGeocodingServisi _geocodingServisi;
 
-    public PersonelServisi(IPersonelRepository repository, IGeocodingServisi geocodingServisi)
+    public PersonelServisi(
+        IPersonelRepository repository,
+        IPersonelAdresRepository adresRepository,
+        IGeocodingServisi geocodingServisi)
     {
         _repository = repository;
+        _adresRepository = adresRepository;
         _geocodingServisi = geocodingServisi;
     }
 
@@ -26,19 +25,27 @@ public class PersonelServisi
 
     public Task<Personel?> PersonelGetirAsync(int id) => _repository.IdIleGetirAsync(id);
 
-    public async Task<(bool GeocodingBasarili, string? Uyari)> PersonelEkleAsync(Personel personel)
+    public async Task<(bool GeocodingBasarili, string? Uyari)> PersonelEkleAsync(Personel personel, PersonelAdres adres)
     {
+        await _repository.EkleAsync(personel);
+        await _repository.KaydetAsync();
+
+        adres.PersonelId = personel.Id;
+        adres.BaslangicTarihi = DateTime.Now;
+
         bool geocodingBasarili = true;
         string? uyari = null;
 
-        if (personel.Enlem == null || personel.Boylam == null)
+        if (adres.Enlem == null || adres.Boylam == null)
         {
-            var sonuc = await _geocodingServisi.AdresteneKoordinatBulAsync(personel.Adres);
+            var tamAdres = $"{adres.Sokak} {adres.DisKapiNo}, {adres.Mahalle}, {adres.IlceAdi}, {adres.Sehir}";
+            var sonuc = await _geocodingServisi.AdresteneKoordinatBulAsync(tamAdres);
 
             if (sonuc.BasariliMi)
             {
-                personel.Enlem = sonuc.Enlem;
-                personel.Boylam = sonuc.Boylam;
+                adres.Enlem = sonuc.Enlem;
+                adres.Boylam = sonuc.Boylam;
+                adres.GeocodeTarihi = DateTime.Now;
             }
             else
             {
@@ -47,8 +54,8 @@ public class PersonelServisi
             }
         }
 
-        await _repository.EkleAsync(personel);
-        await _repository.KaydetAsync();
+        await _adresRepository.EkleAsync(adres);
+        await _adresRepository.KaydetAsync();
 
         return (geocodingBasarili, uyari);
     }
@@ -70,4 +77,7 @@ public class PersonelServisi
         await _repository.GuncelleAsync(personel);
         await _repository.KaydetAsync();
     }
+
+    public Task<PersonelAdres?> AktifAdresiGetirAsync(int personelId) =>
+        _adresRepository.AktifAdresiGetirAsync(personelId);
 }

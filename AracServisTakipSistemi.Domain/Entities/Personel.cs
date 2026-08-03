@@ -10,10 +10,11 @@ public class Personel
     public PersonelTuru PersonelTuru { get; set; } = PersonelTuru.Calisan;
     public string Cinsiyet { get; set; } = string.Empty;
     public DateTime? DogumTarihi { get; set; }
-    public string Adres { get; set; } = string.Empty;
-    public double? Enlem { get; set; }
-    public double? Boylam { get; set; }
-    public string Semt { get; set; } = string.Empty;
+    public string? AnneAdi { get; set; }
+    public string? BabaAdi { get; set; }
+    public string? KanGrubu { get; set; }
+    public string? Telefon { get; set; }
+    public string? Eposta { get; set; }
     public bool AktifMi { get; set; } = true;
     public DateTime IseGirisTarihi { get; set; }
     public DateTime? IstenCikisTarihi { get; set; }
@@ -23,6 +24,7 @@ public class Personel
     public int? VardiyaId { get; set; }
     public Vardiya? Vardiya { get; set; }
 
+    public ICollection<PersonelAdres> Adresler { get; set; } = new List<PersonelAdres>();
     public ICollection<AracAtama> AracAtamalari { get; set; } = new List<AracAtama>();
     public ICollection<RotaDuragi> RotaDuraklari { get; set; } = new List<RotaDuragi>();
 }

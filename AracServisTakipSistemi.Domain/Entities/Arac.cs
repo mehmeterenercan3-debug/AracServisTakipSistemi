@@ -30,6 +30,8 @@ public class Arac
     public Personel? SoforPersonel { get; set; }
 
     public ICollection<AracArizaKaydi> ArizaKayitlari { get; set; } = new List<AracArizaKaydi>();
+    public ICollection<BakimKaydi> BakimKayitlari { get; set; } = new List<BakimKaydi>();
+    public ICollection<RiskSkoru> RiskSkorlari { get; set; } = new List<RiskSkoru>();
     public ICollection<AracAtama> AracAtamalari { get; set; } = new List<AracAtama>();
     public ICollection<Rota> Rotalar { get; set; } = new List<Rota>();
 }

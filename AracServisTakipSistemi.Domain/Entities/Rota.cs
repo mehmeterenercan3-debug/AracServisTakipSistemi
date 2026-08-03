@@ -15,6 +15,7 @@ public class Rota
     public double ToplamMesafeKm { get; set; }
     public int TahminiSureDk { get; set; }
     public bool AktifMi { get; set; } = true;
+    public bool ErpyeAktarildiMi { get; set; } = false;
 
     public ICollection<RotaDuragi> Duraklar { get; set; } = new List<RotaDuragi>();
 }

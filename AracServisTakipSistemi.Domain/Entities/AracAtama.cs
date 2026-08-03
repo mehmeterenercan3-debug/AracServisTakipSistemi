@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AracServisTakipSistemi.Domain.Entities;
+﻿namespace AracServisTakipSistemi.Domain.Entities;
 
 public class AracAtama
 {
@@ -16,4 +10,6 @@ public class AracAtama
     public DateTime AtamaTarihi { get; set; }
     public DateTime? AtamaBitisTarihi { get; set; }
     public bool AktifMi { get; set; } = true;
+    public bool ErpyeAktarildiMi { get; set; } = false;
+    public string? ErpKayitId { get; set; }
 }
