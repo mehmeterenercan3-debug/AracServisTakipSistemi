@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using AracServisTakipSistemi.Application.Interfaces;
-using AracServisTakipSistemi.Application.Options;
-using AracServisTakipSistemi.Application.Services;
-using AracServisTakipSistemi.Infrastructure.Data;
-using AracServisTakipSistemi.Infrastructure.Repositories;
-using AracServisTakipSistemi.Infrastructure.Services;
+using AracServisTakipSistemi.BLL.Interfaces;
+using AracServisTakipSistemi.BLL.Options;
+using AracServisTakipSistemi.BLL.Services;
+using AracServisTakipSistemi.DAL.Data;
+using AracServisTakipSistemi.DAL.Repositories;
+using AracServisTakipSistemi.DAL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
