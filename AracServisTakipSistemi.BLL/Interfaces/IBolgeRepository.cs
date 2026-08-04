@@ -15,5 +15,6 @@ public interface IBolgeRepository
     Task<Bolge?> IdIleGetirAsync(int id);
     Task EkleAsync(Bolge bolge);
     Task GuncelleAsync(Bolge bolge);
+    Task<bool> SilAsync(int id);
     Task KaydetAsync();
 }

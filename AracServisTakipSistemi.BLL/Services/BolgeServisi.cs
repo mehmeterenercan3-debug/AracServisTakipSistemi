@@ -22,6 +22,8 @@ public class BolgeServisi
 
     public Task<List<Bolge>> AktifBolgeleriGetirAsync() => _repository.AktifleriGetirAsync();
 
+    public Task<Bolge?> BolgeGetirAsync(int id) => _repository.IdIleGetirAsync(id);
+
     public async Task BolgeEkleAsync(Bolge bolge)
     {
         await _repository.EkleAsync(bolge);
@@ -32,5 +34,14 @@ public class BolgeServisi
     {
         await _repository.GuncelleAsync(bolge);
         await _repository.KaydetAsync();
+    }
+
+    public async Task<bool> BolgeSilAsync(int id)
+    {
+        var silindiMi = await _repository.SilAsync(id);
+        if (silindiMi)
+            await _repository.KaydetAsync();
+
+        return silindiMi;
     }
 }

@@ -15,5 +15,6 @@ public interface IVardiyaRepository
     Task<Vardiya?> IdIleGetirAsync(int id);
     Task EkleAsync(Vardiya vardiya);
     Task GuncelleAsync(Vardiya vardiya);
+    Task<bool> SilAsync(int id);
     Task KaydetAsync();
 }

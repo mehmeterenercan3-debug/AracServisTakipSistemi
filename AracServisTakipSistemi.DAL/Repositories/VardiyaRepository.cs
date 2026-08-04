@@ -35,5 +35,18 @@ public class VardiyaRepository : IVardiyaRepository
         return Task.CompletedTask;
     }
 
+    public async Task<bool> SilAsync(int id)
+    {
+        var vardiya = await _context.Vardiyalar.FindAsync(id);
+        if (vardiya == null) return false;
+
+        // Bu vardiyaya bağlı personel varsa silmeyi engelle — veri bütünlüğü için
+        var bagliPersonelVarMi = await _context.Personeller.AnyAsync(p => p.VardiyaId == id);
+        if (bagliPersonelVarMi) return false;
+
+        _context.Vardiyalar.Remove(vardiya);
+        return true;
+    }
+
     public async Task KaydetAsync() => await _context.SaveChangesAsync();
 }

@@ -73,7 +73,15 @@ public class VardiyaController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Hocanın AJAX-silme desenine uyarlanmış hali — gerçek silme değil, aktif/pasif değiştirme
+    // Hocanın Categories'te gösterdiği AJAX silme deseniyle birebir aynı
+    [HttpPost]
+    public async Task<IActionResult> Sil(int id)
+    {
+        var silindiMi = await _vardiyaServisi.VardiyaSilAsync(id);
+        return Json(silindiMi ? "başarılı" : "hata");
+    }
+
+    // Aktif/Pasif değiştirme — silmenin alternatifi, ilişkili personel varken kullanılabilir
     [HttpPost]
     public async Task<IActionResult> DurumDegistir(int id)
     {

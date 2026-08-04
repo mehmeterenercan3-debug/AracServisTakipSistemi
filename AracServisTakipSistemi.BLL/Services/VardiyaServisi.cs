@@ -29,4 +29,13 @@ public class VardiyaServisi
         await _repository.GuncelleAsync(vardiya);
         await _repository.KaydetAsync();
     }
+
+    public async Task<bool> VardiyaSilAsync(int id)
+    {
+        var silindiMi = await _repository.SilAsync(id);
+        if (silindiMi)
+            await _repository.KaydetAsync();
+
+        return silindiMi;
+    }
 }

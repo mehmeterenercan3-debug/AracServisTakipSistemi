@@ -27,10 +27,10 @@
             <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="vardiyaTablosu">
         @foreach (var vardiya in Model)
         {
-            <tr>
+            <tr id="satir-@vardiya.Id">
                 <td>@vardiya.VardiyaAdi</td>
                 <td>@vardiya.BaslangicSaati.ToString(@"hh\:mm")</td>
                 <td>@vardiya.BitisSaati.ToString(@"hh\:mm")</td>
@@ -56,6 +56,11 @@
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary btn-durum-degistir" data-kid="@vardiya.Id">
                         @(vardiya.AktifMi ? "Pasife Al" : "Aktif Et")
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#silModal"
+                            data-kid="@vardiya.Id" data-ad="@vardiya.VardiyaAdi">
+                        Sil
                     </button>
                 </td>
             </tr>
@@ -136,6 +141,25 @@
     </div>
 </div>
 
+<!-- Sil Onay Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vardiyayı Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="sil-mesaj"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="silOnaylaBtn">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // Düzenle butonuna basınca, o satırın data-* değerlerini modal'daki inputlara doldur
@@ -149,7 +173,7 @@
             });
         });
 
-        // Durum değiştir — AJAX, hocanın Sil desenine uyarlanmış hali
+        // Durum değiştir — AJAX
         document.querySelectorAll('.btn-durum-degistir').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var id = btn.getAttribute('data-kid');
@@ -168,6 +192,38 @@
                         alert("Bir hata oluştu, tekrar deneyin.");
                     }
                 });
+            });
+        });
+
+        // Sil — onay modal'ı açılınca mesajı doldur, id'yi sakla
+        var silinecekId = null;
+        document.querySelectorAll('[data-bs-target="#silModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                silinecekId = btn.getAttribute('data-kid');
+                var ad = btn.getAttribute('data-ad');
+                document.getElementById('sil-mesaj').innerText =
+                    "'" + ad + "' vardiyasını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
+            });
+        });
+
+        // Sil — onayla butonuna basınca AJAX ile sil
+        document.getElementById('silOnaylaBtn').addEventListener('click', function () {
+            if (!silinecekId) return;
+
+            $.ajax({
+                url: '/Vardiya/Sil',
+                type: 'POST',
+                data: { id: silinecekId },
+                success: function (sonuc) {
+                    if (sonuc === "başarılı") {
+                        location.reload();
+                    } else {
+                        alert("Bu vardiyaya bağlı personel olduğu için silinemedi. Önce personelleri başka bir vardiyaya taşıyın ya da 'Pasife Al' kullanın.");
+                    }
+                },
+                error: function () {
+                    alert("Bir hata oluştu, tekrar deneyin.");
+                }
             });
         });
     </script>

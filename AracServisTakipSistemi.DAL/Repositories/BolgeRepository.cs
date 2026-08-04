@@ -35,5 +35,18 @@ public class BolgeRepository : IBolgeRepository
         return Task.CompletedTask;
     }
 
+    public async Task<bool> SilAsync(int id)
+    {
+        var bolge = await _context.Bolgeler.FindAsync(id);
+        if (bolge == null) return false;
+
+        var bagliPersonelVarMi = await _context.Personeller.AnyAsync(p => p.BolgeId == id);
+        var bagliRotaVarMi = await _context.RotaBolgeleri.AnyAsync(rb => rb.BolgeId == id);
+        if (bagliPersonelVarMi || bagliRotaVarMi) return false;
+
+        _context.Bolgeler.Remove(bolge);
+        return true;
+    }
+
     public async Task KaydetAsync() => await _context.SaveChangesAsync();
 }
