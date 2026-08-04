@@ -22,19 +22,20 @@ builder.Services.Configure<RotaAyarlari>(builder.Configuration.GetSection("RotaA
 builder.Services.AddScoped<IPersonelRepository, PersonelRepository>();
 builder.Services.AddScoped<IPersonelAdresRepository, PersonelAdresRepository>();
 builder.Services.AddScoped<IAracRepository, AracRepository>();
-builder.Services.AddScoped<IAracAtamaRepository, AracAtamaRepository>();
 builder.Services.AddScoped<ISemtReferansRepository, SemtReferansRepository>();
 builder.Services.AddScoped<IVardiyaRepository, VardiyaRepository>();
+builder.Services.AddScoped<IBolgeRepository, BolgeRepository>();
+builder.Services.AddScoped<IRotaRepository, RotaRepository>();
 
 // Servisler
 builder.Services.AddScoped<IMesafeHesaplayici, HaversineMesafeHesaplayici>();
 builder.Services.AddHttpClient<IGeocodingServisi, NominatimGeocodingServisi>();
 builder.Services.AddScoped<RotaHesaplamaServisi>();
-builder.Services.AddScoped<AracAtamaServisi>();
 builder.Services.AddScoped<PersonelServisi>();
 builder.Services.AddScoped<AracServisi>();
 builder.Services.AddScoped<BakimRiskServisi>();
 builder.Services.AddScoped<SemtReferansServisi>();
+builder.Services.AddScoped<BolgeServisi>();
 builder.Services.AddScoped<RotaYenidenHesaplamaOrkestraServisi>();
 
 var app = builder.Build();

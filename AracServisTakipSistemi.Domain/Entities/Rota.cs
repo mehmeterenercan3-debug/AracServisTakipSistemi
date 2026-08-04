@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AracServisTakipSistemi.Domain.Enums;
 
 namespace AracServisTakipSistemi.Domain.Entities;
 
@@ -11,12 +7,14 @@ public class Rota
     public int Id { get; set; }
     public int AracId { get; set; }
     public Arac? Arac { get; set; }
+    public RotaDurumu Durum { get; set; } = RotaDurumu.OnayBekliyor;
     public DateTime RotaTarihi { get; set; }
     public double ToplamMesafeKm { get; set; }
     public int TahminiSureDk { get; set; }
     public bool AktifMi { get; set; } = true;
     public bool ErpyeAktarildiMi { get; set; } = false;
 
+    public ICollection<RotaBolge> Bolgeler { get; set; } = new List<RotaBolge>();
     public ICollection<RotaDuragi> Duraklar { get; set; } = new List<RotaDuragi>();
 }
 

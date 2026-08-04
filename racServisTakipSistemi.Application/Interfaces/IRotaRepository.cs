@@ -8,11 +8,11 @@ using AracServisTakipSistemi.Domain.Entities;
 
 namespace AracServisTakipSistemi.Application.Interfaces;
 
-public interface IAracAtamaRepository
+public interface IRotaRepository
 {
-    Task<AracAtama?> AktifAtamayiGetirAsync(int personelId);
-    Task<List<Personel>> AracIcinAktifPersonelleriGetirAsync(int aracId);
-    Task EkleAsync(AracAtama atama);
-    Task GuncelleAsync(AracAtama atama);
+    Task<Rota?> IdIleGetirAsync(int id);
+    Task<List<Rota>> AktifRotalariGetirAsync();
+    Task EkleAsync(Rota rota);
+    Task GuncelleAsync(Rota rota);
     Task KaydetAsync();
 }
