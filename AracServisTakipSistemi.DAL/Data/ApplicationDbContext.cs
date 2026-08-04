@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using AracServisTakipSistemi.Entities.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace AracServisTakipSistemi.DAL.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -23,6 +25,10 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ApplicationUser>()
+            .HasOne(u => u.Personel).WithMany().HasForeignKey(u => u.PersonelId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<PersonelAdres>()
             .HasOne(a => a.Personel).WithMany(p => p.Adresler).HasForeignKey(a => a.PersonelId);

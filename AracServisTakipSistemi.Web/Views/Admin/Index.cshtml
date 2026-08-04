@@ -1,0 +1,49 @@
+@model AracServisTakipSistemi.Web.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Yönetim Paneli";
+}
+
+<h2>Yönetim Paneli</h2>
+
+<div class="row mt-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Aktif Personel</h5>
+                <p class="card-text fs-3">@Model.ToplamAktifPersonel</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Beklemede Kalan Personel</h5>
+                <p class="card-text fs-3">@Model.BeklemedeKalanPersonel</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Aktif Araç</h5>
+                <p class="card-text fs-3">@Model.ToplamAktifArac</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Bakımdaki Araç</h5>
+                <p class="card-text fs-3">@Model.BakimdakiAracSayisi</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-2 mb-2"><a class="btn btn-outline-primary w-100" asp-controller="Personel" asp-action="Index">Personel Yönetimi</a></div>
+    <div class="col-md-2 mb-2"><a class="btn btn-outline-primary w-100" asp-controller="Arac" asp-action="Index">Araç Yönetimi</a></div>
+    <div class="col-md-2 mb-2"><a class="btn btn-outline-primary w-100" asp-controller="Bolge" asp-action="Index">Bölge Yönetimi</a></div>
+    <div class="col-md-2 mb-2"><a class="btn btn-outline-primary w-100" asp-controller="Vardiya" asp-action="Index">Vardiya Yönetimi</a></div>
+    <div class="col-md-2 mb-2"><a class="btn btn-outline-primary w-100" asp-controller="Rota" asp-action="Index">Rotalar</a></div>
+</div>

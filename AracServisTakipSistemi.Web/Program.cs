@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using AracServisTakipSistemi.BLL.Interfaces;
 using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.DAL.Data;
@@ -15,6 +16,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
+    {
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireUppercase = false;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Hesap/Giris";
+    options.AccessDeniedPath = "/Hesap/Erisimyok";
+});
 
 // Repository'ler
 builder.Services.AddScoped<IPersonelRepository, PersonelRepository>();
@@ -52,10 +69,37 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Rolleri ilk çalıştırmada otomatik oluştur
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+    foreach (var rol in new[] { "Admin", "Sofor", "Personel" })
+    {
+        if (!await roleManager.RoleExistsAsync(rol))
+            await roleManager.CreateAsync(new IdentityRole<int>(rol));
+    }
+}
+
+// İlk admin kullanıcısını oluştur (yoksa)
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var adminKullaniciAdi = "admin";
+
+    if (await userManager.FindByNameAsync(adminKullaniciAdi) == null)
+    {
+        var admin = new ApplicationUser { UserName = adminKullaniciAdi, Email = "admin@aracservis.local" };
+        var sonuc = await userManager.CreateAsync(admin, "Admin123!");
+        if (sonuc.Succeeded)
+            await userManager.AddToRoleAsync(admin, "Admin");
+    }
+}
 
 app.Run();

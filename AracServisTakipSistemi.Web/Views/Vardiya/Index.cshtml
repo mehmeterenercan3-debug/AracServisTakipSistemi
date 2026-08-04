@@ -1,0 +1,174 @@
+@model List<AracServisTakipSistemi.Entities.Entities.Vardiya>
+@{
+    ViewData["Title"] = "Vardiyalar";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Vardiyalar</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Vardiya</button>
+</div>
+
+@if (TempData["Basari"] != null)
+{
+    <div class="alert alert-success">@TempData["Basari"]</div>
+}
+@if (TempData["Hata"] != null)
+{
+    <div class="alert alert-danger">@TempData["Hata"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Vardiya Adı</th>
+            <th>Başlangıç Saati</th>
+            <th>Bitiş Saati</th>
+            <th>Durum</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var vardiya in Model)
+        {
+            <tr>
+                <td>@vardiya.VardiyaAdi</td>
+                <td>@vardiya.BaslangicSaati.ToString(@"hh\:mm")</td>
+                <td>@vardiya.BitisSaati.ToString(@"hh\:mm")</td>
+                <td id="durum-@vardiya.Id">
+                    @if (vardiya.AktifMi)
+                    {
+                        <span class="badge bg-success">Aktif</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Pasif</span>
+                    }
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#duzenleModal"
+                            data-id="@vardiya.Id"
+                            data-ad="@vardiya.VardiyaAdi"
+                            data-baslangic="@vardiya.BaslangicSaati.ToString(@"hh\:mm")"
+                            data-bitis="@vardiya.BitisSaati.ToString(@"hh\:mm")"
+                            data-aktif="@vardiya.AktifMi.ToString().ToLower()">
+                        Düzenle
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-durum-degistir" data-kid="@vardiya.Id">
+                        @(vardiya.AktifMi ? "Pasife Al" : "Aktif Et")
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz vardiya eklenmemiş.</p>
+}
+
+<!-- Ekle Modal -->
+<div class="modal fade" id="ekleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Vardiya Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Vardiya Adı</label>
+                    <input class="form-control" type="text" name="VardiyaAdi" placeholder="örn. Sabah Vardiyası" /><br />
+
+                    <label class="form-label">Başlangıç Saati</label>
+                    <input class="form-control" type="time" name="BaslangicSaati" /><br />
+
+                    <label class="form-label">Bitiş Saati</label>
+                    <input class="form-control" type="time" name="BitisSaati" /><br />
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="AktifMi" value="true" checked />
+                        <label class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Düzenle Modal -->
+<div class="modal fade" id="duzenleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Edit" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vardiya Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-Id" name="Id" />
+
+                    <label class="form-label">Vardiya Adı</label>
+                    <input class="form-control" type="text" id="edit-VardiyaAdi" name="VardiyaAdi" /><br />
+
+                    <label class="form-label">Başlangıç Saati</label>
+                    <input class="form-control" type="time" id="edit-BaslangicSaati" name="BaslangicSaati" /><br />
+
+                    <label class="form-label">Bitiş Saati</label>
+                    <input class="form-control" type="time" id="edit-BitisSaati" name="BitisSaati" /><br />
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="edit-AktifMi" name="AktifMi" value="true" />
+                        <label class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Düzenle butonuna basınca, o satırın data-* değerlerini modal'daki inputlara doldur
+        document.querySelectorAll('[data-bs-target="#duzenleModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.getElementById('edit-Id').value = btn.getAttribute('data-id');
+                document.getElementById('edit-VardiyaAdi').value = btn.getAttribute('data-ad');
+                document.getElementById('edit-BaslangicSaati').value = btn.getAttribute('data-baslangic');
+                document.getElementById('edit-BitisSaati').value = btn.getAttribute('data-bitis');
+                document.getElementById('edit-AktifMi').checked = (btn.getAttribute('data-aktif') === 'true');
+            });
+        });
+
+        // Durum değiştir — AJAX, hocanın Sil desenine uyarlanmış hali
+        document.querySelectorAll('.btn-durum-degistir').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Vardiya/DurumDegistir',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (sonuc === "başarılı") {
+                            location.reload();
+                        } else {
+                            alert("Bir hata oluştu, tekrar deneyin.");
+                        }
+                    },
+                    error: function () {
+                        alert("Bir hata oluştu, tekrar deneyin.");
+                    }
+                });
+            });
+        });
+    </script>
+}
