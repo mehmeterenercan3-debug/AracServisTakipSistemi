@@ -22,4 +22,7 @@ public class PersonelAdres
     public double? Enlem { get; set; }
     public double? Boylam { get; set; }
     public DateTime? GeocodeTarihi { get; set; }
+
+    public string? GeocodeKaynagi { get; set; }
+    public bool? GeocodeBasariliMi { get; set; }
 }

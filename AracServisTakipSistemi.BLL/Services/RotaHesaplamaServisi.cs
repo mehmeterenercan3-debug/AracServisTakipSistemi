@@ -115,9 +115,6 @@ public class RotaHesaplamaServisi
 
             // Bu gruba araç(lar) ata — kapasite + tampon kontrolü, gerekirse böl
             var musaitAraclar = kullanilabilirAraclar.Where(a => !kullanilmisAraclar.Contains(a.Id)).ToList();
-            var tamponluKapasite = musaitAraclar.Sum(a => a.KapasiteSayisi) > 0
-                ? musaitAraclar.Max(a => a.KapasiteSayisi) + seedBolge.KapasiteTamponu
-                : 0;
 
             var kalanGrupPersonel = new List<Personel>(grupPersonel);
 
@@ -146,7 +143,7 @@ public class RotaHesaplamaServisi
                 var soforKonumu = (soforAdresi.Enlem!.Value, soforAdresi.Boylam!.Value);
 
                 var siraliListe = SiraOptimizeEt(buArayaAlinacaklar, soforKonumu, adresSozlugu);
-                var toplamSureDk = ToplamRotaSuresiHesapla(siraliListe, soforKonumu, adresSozlugu);
+                var (toplamMesafeKm, toplamSureDk) = ToplamRotaMesafeVeSureHesapla(siraliListe, soforKonumu, adresSozlugu);
 
                 foreach (var p in buArayaAlinacaklar) p.ServisDurumu = ServisDurumu.Atanmis;
 
@@ -158,6 +155,7 @@ public class RotaHesaplamaServisi
                     VardiyaAdi = vardiya.VardiyaAdi,
                     BolgeIdleri = grupBolgeIdleri,
                     ZiyaretSirasi = siraliListe,
+                    ToplamMesafeKm = toplamMesafeKm,
                     TahminiToplamSureDk = (int)toplamSureDk,
                     GidisKalkisSaati = vardiya.BaslangicSaati.Subtract(TimeSpan.FromMinutes(toplamSureDk)),
                     DonusKalkisSaati = vardiya.BitisSaati
@@ -189,9 +187,10 @@ public class RotaHesaplamaServisi
         return sirali;
     }
 
-    private double ToplamRotaSuresiHesapla(List<Personel> siraliListe, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
+    private (double MesafeKm, double SureDk) ToplamRotaMesafeVeSureHesapla(
+        List<Personel> siraliListe, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
     {
-        if (siraliListe.Count == 0) return 0;
+        if (siraliListe.Count == 0) return (0, 0);
         var ilkAdres = adresSozlugu[siraliListe[0].Id];
         double toplamKm = _mesafeHesaplayici.MesafeHesaplaKm(baslangic.Enlem, baslangic.Boylam, ilkAdres.Enlem!.Value, ilkAdres.Boylam!.Value);
 
@@ -202,6 +201,6 @@ public class RotaHesaplamaServisi
             toplamKm += _mesafeHesaplayici.MesafeHesaplaKm(a1.Enlem!.Value, a1.Boylam!.Value, a2.Enlem!.Value, a2.Boylam!.Value);
         }
 
-        return toplamKm / OrtalamaHizKmSaat * 60;
+        return (toplamKm, toplamKm / OrtalamaHizKmSaat * 60);
     }
 }

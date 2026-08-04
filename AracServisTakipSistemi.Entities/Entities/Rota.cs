@@ -7,7 +7,7 @@ public class Rota
     public int Id { get; set; }
     public int AracId { get; set; }
     public Arac? Arac { get; set; }
-    public RotaDurumu Durum { get; set; } = RotaDurumu.OnayBekliyor;
+    public RotaDurumu Durum { get; set; } = RotaDurumu.Onaylandi;
     public DateTime RotaTarihi { get; set; }
     public double ToplamMesafeKm { get; set; }
     public int TahminiSureDk { get; set; }

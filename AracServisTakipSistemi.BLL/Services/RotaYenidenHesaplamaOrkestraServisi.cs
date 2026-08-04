@@ -10,7 +10,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
     private readonly PersonelServisi _personelServisi;
     private readonly AracServisi _aracServisi;
     private readonly BolgeServisi _bolgeServisi;
-    private readonly IVardiyaRepository _vardiyaRepository;
+    private readonly VardiyaServisi _vardiyaServisi;
     private readonly IPersonelAdresRepository _personelAdresRepository;
     private readonly RotaHesaplamaServisi _rotaHesaplamaServisi;
     private readonly IRotaRepository _rotaRepository;
@@ -19,7 +19,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
         PersonelServisi personelServisi,
         AracServisi aracServisi,
         BolgeServisi bolgeServisi,
-        IVardiyaRepository vardiyaRepository,
+        VardiyaServisi vardiyaServisi,
         IPersonelAdresRepository personelAdresRepository,
         RotaHesaplamaServisi rotaHesaplamaServisi,
         IRotaRepository rotaRepository)
@@ -27,7 +27,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
         _personelServisi = personelServisi;
         _aracServisi = aracServisi;
         _bolgeServisi = bolgeServisi;
-        _vardiyaRepository = vardiyaRepository;
+        _vardiyaServisi = vardiyaServisi;
         _personelAdresRepository = personelAdresRepository;
         _rotaHesaplamaServisi = rotaHesaplamaServisi;
         _rotaRepository = rotaRepository;
@@ -38,7 +38,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
         var aktifPersoneller = await _personelServisi.AktifPersonelleriGetirAsync();
         var aktifAraclar = await _aracServisi.AktifAraclariGetirAsync();
         var aktifBolgeler = await _bolgeServisi.AktifBolgeleriGetirAsync();
-        var aktifVardiyalar = await _vardiyaRepository.AktifleriGetirAsync();
+        var aktifVardiyalar = await _vardiyaServisi.AktifVardiyalariGetirAsync();
 
         var ilgiliIdler = aktifPersoneller.Select(p => p.Id)
             .Concat(aktifAraclar.Where(a => a.SoforPersonelId.HasValue).Select(a => a.SoforPersonelId!.Value))
@@ -55,15 +55,15 @@ public class RotaYenidenHesaplamaOrkestraServisi
             await _rotaRepository.GuncelleAsync(eski);
         }
 
-        // Yeni rotaları kaydet — onay bekliyor durumunda
+        // Yeni rotaları kaydet — normalde otomatik onaylı, sadece kapasite yetersizse onay bekliyor
         foreach (var rotaSonucu in sonuc.Rotalar)
         {
             var yeniRota = new Rota
             {
                 AracId = rotaSonucu.AracId,
-                Durum = RotaDurumu.OnayBekliyor,
+                Durum = sonuc.KapasiteYetersiz ? RotaDurumu.OnayBekliyor : RotaDurumu.Onaylandi,
                 RotaTarihi = DateTime.Today,
-                ToplamMesafeKm = 0,
+                ToplamMesafeKm = rotaSonucu.ToplamMesafeKm,
                 TahminiSureDk = rotaSonucu.TahminiToplamSureDk,
                 AktifMi = true
             };

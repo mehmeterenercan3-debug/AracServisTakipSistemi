@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using AracServisTakipSistemi.BLL.Interfaces;
-using AracServisTakipSistemi.BLL.Options;
 using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.DAL.Data;
 using AracServisTakipSistemi.DAL.Repositories;
 using AracServisTakipSistemi.DAL.Services;
+using AracServisTakipSistemi.Entities.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +15,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
-
-builder.Services.Configure<RotaAyarlari>(builder.Configuration.GetSection("RotaAyarlari"));
 
 // Repository'ler
 builder.Services.AddScoped<IPersonelRepository, PersonelRepository>();
@@ -37,6 +35,7 @@ builder.Services.AddScoped<BakimRiskServisi>();
 builder.Services.AddScoped<SemtReferansServisi>();
 builder.Services.AddScoped<BolgeServisi>();
 builder.Services.AddScoped<RotaYenidenHesaplamaOrkestraServisi>();
+builder.Services.AddScoped<VardiyaServisi>();
 
 var app = builder.Build();
 

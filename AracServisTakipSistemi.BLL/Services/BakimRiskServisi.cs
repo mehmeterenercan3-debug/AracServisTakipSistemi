@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using AracServisTakipSistemi.BLL.DTOs;
+using AracServisTakipSistemi.BLL.Interfaces;
 using AracServisTakipSistemi.Entities.Entities;
 using AracServisTakipSistemi.Entities.Enums;
 
@@ -12,6 +13,13 @@ namespace AracServisTakipSistemi.BLL.Services;
 
 public class BakimRiskServisi
 {
+    private readonly IAracRepository _aracRepository;
+
+    public BakimRiskServisi(IAracRepository aracRepository)
+    {
+        _aracRepository = aracRepository;
+    }
+
     public BakimRiskSonucu RiskHesapla(Arac arac)
     {
         int puan = 0;
@@ -77,5 +85,24 @@ public class BakimRiskServisi
             RiskSeviyesi = seviye,
             Oneriler = oneriler
         };
+    }
+
+    public async Task<BakimRiskSonucu> RiskHesaplaVeKaydetAsync(Arac arac)
+    {
+        var sonuc = RiskHesapla(arac);
+
+        arac.RiskSkorlari.Add(new RiskSkoru
+        {
+            AracId = arac.Id,
+            SkorDegeri = sonuc.RiskPuani,
+            RiskSeviyesi = sonuc.RiskSeviyesi,
+            HesaplamaTarihi = DateTime.Now,
+            OnerilenAksiyon = string.Join(" | ", sonuc.Oneriler)
+        });
+
+        await _aracRepository.GuncelleAsync(arac);
+        await _aracRepository.KaydetAsync();
+
+        return sonuc;
     }
 }

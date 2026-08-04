@@ -46,12 +46,22 @@ public class PersonelServisi
                 adres.Enlem = sonuc.Enlem;
                 adres.Boylam = sonuc.Boylam;
                 adres.GeocodeTarihi = DateTime.Now;
+                adres.GeocodeKaynagi = "Otomatik";
+                adres.GeocodeBasariliMi = true;
             }
             else
             {
                 geocodingBasarili = false;
+                adres.GeocodeBasariliMi = false;
                 uyari = $"Adres otomatik bulunamadı ({sonuc.HataMesaji}). Lütfen koordinatı elle girin.";
             }
+        }
+        else
+        {
+            // Enlem/Boylam formdan zaten dolu geldiyse, kullanıcı elle girmiş demektir
+            adres.GeocodeKaynagi = "Manuel";
+            adres.GeocodeBasariliMi = true;
+            adres.GeocodeTarihi = DateTime.Now;
         }
 
         await _adresRepository.EkleAsync(adres);

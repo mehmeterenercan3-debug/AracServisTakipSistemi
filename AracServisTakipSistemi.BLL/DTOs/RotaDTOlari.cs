@@ -11,6 +11,7 @@ public class RotaSonucu
     public List<int> BolgeIdleri { get; set; } = new();
     public List<Personel> ZiyaretSirasi { get; set; } = new();
     public int ToplamPersonelSayisi => ZiyaretSirasi.Count;
+    public double ToplamMesafeKm { get; set; }
     public int TahminiToplamSureDk { get; set; }
     public TimeSpan GidisKalkisSaati { get; set; }
     public TimeSpan DonusKalkisSaati { get; set; }
