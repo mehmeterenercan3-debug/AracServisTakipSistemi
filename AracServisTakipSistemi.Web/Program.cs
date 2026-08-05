@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using AracServisTakipSistemi.BLL.Interfaces;
@@ -54,6 +55,15 @@ builder.Services.AddScoped<BolgeServisi>();
 builder.Services.AddScoped<RotaYenidenHesaplamaOrkestraServisi>();
 builder.Services.AddScoped<VardiyaServisi>();
 
+// Sunucu her zaman nokta = ondalık ayıracı kullansın (tr-TR virgül bekleyip veri bozulmasın diye)
+var desteklenenKulturler = new[] { new CultureInfo("en-US") };
+builder.Services.Configure<Microsoft.AspNetCore.Builder.RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-US");
+    options.SupportedCultures = desteklenenKulturler;
+    options.SupportedUICultures = desteklenenKulturler;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -66,6 +76,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseRequestLocalization();
 
 app.UseRouting();
 
