@@ -1,0 +1,37 @@
+﻿@using AracServisTakipSistemi.Entities.Entities
+@model List<AracArizaKaydi>
+
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Arıza Türü</th>
+            <th>Açıklama</th>
+            <th>Maliyet</th>
+            <th>Km</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kayit in Model)
+        {
+            <tr id="ariza-row-@kayit.Id">
+                <td>@kayit.ArizaTarihi.ToString("dd.MM.yyyy")</td>
+                <td>@kayit.ArizaTuru</td>
+                <td>@kayit.Aciklama</td>
+                <td>@kayit.OnarimMaliyeti ₺</td>
+                <td>@kayit.ArizaAnindakiKm</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-ariza-sil" data-kid="@kayit.Id">
+                        Sil
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bu araca ait arıza kaydı yok.</p>
+}

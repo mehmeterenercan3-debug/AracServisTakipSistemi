@@ -13,12 +13,21 @@ public class AracController : Controller
     private readonly AracServisi _aracServisi;
     private readonly PersonelServisi _personelServisi;
     private readonly BakimRiskServisi _bakimRiskServisi;
+    private readonly AracArizaKaydiServisi _arizaKaydiServisi;
+    private readonly BakimKaydiServisi _bakimKaydiServisi;
 
-    public AracController(AracServisi aracServisi, PersonelServisi personelServisi, BakimRiskServisi bakimRiskServisi)
+    public AracController(
+        AracServisi aracServisi,
+        PersonelServisi personelServisi,
+        BakimRiskServisi bakimRiskServisi,
+        AracArizaKaydiServisi arizaKaydiServisi,
+        BakimKaydiServisi bakimKaydiServisi)
     {
         _aracServisi = aracServisi;
         _personelServisi = personelServisi;
         _bakimRiskServisi = bakimRiskServisi;
+        _arizaKaydiServisi = arizaKaydiServisi;
+        _bakimKaydiServisi = bakimKaydiServisi;
     }
 
     public async Task<IActionResult> Index()
@@ -146,7 +155,6 @@ public class AracController : Controller
 
         arac.AktifMi = !arac.AktifMi;
         await _aracServisi.AracGuncelleAsync(arac);
-
         return Json("başarılı");
     }
 
@@ -169,5 +177,91 @@ public class AracController : Controller
         {
             return Json(new { basarili = false });
         }
+    }
+
+    // ---- Arıza Kayıtları ----
+
+    [HttpGet]
+    public async Task<IActionResult> ArizaKayitlariPartial(int aracId)
+    {
+        var kayitlar = await _arizaKaydiServisi.AracIcinGetirAsync(aracId);
+        ViewBag.AracId = aracId;
+        return PartialView("_ArizaKayitlariPartial", kayitlar);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ArizaEkle(
+        [FromForm] int AracId,
+        [FromForm] DateTime ArizaTarihi,
+        [FromForm] string ArizaTuru,
+        [FromForm] string? Aciklama,
+        [FromForm] decimal OnarimMaliyeti,
+        [FromForm] double ArizaAnindakiKm)
+    {
+        var kayit = new AracArizaKaydi
+        {
+            AracId = AracId,
+            ArizaTarihi = ArizaTarihi,
+            ArizaTuru = ArizaTuru,
+            Aciklama = Aciklama ?? string.Empty,
+            OnarimMaliyeti = OnarimMaliyeti,
+            ArizaAnindakiKm = ArizaAnindakiKm
+        };
+
+        await _arizaKaydiServisi.EkleAsync(kayit);
+        TempData["Basari"] = "Arıza kaydı eklendi.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ArizaSil(int id)
+    {
+        var silindi = await _arizaKaydiServisi.SilAsync(id);
+        return Json(silindi ? "başarılı" : "hata");
+    }
+
+    // ---- Bakım Kayıtları ----
+
+    [HttpGet]
+    public async Task<IActionResult> BakimKayitlariPartial(int aracId)
+    {
+        var kayitlar = await _bakimKaydiServisi.AracIcinGetirAsync(aracId);
+        ViewBag.AracId = aracId;
+        return PartialView("_BakimKayitlariPartial", kayitlar);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BakimEkle(
+        [FromForm] int AracId,
+        [FromForm] DateTime BakimTarihi,
+        [FromForm] string BakimTuru,
+        [FromForm] int? SonrakiBakimKm,
+        [FromForm] DateTime? SonrakiBakimTarihi,
+        [FromForm] decimal Maliyet,
+        [FromForm] string? Aciklama)
+    {
+        var kayit = new BakimKaydi
+        {
+            AracId = AracId,
+            BakimTarihi = BakimTarihi,
+            BakimTuru = BakimTuru,
+            SonrakiBakimKm = SonrakiBakimKm,
+            SonrakiBakimTarihi = SonrakiBakimTarihi,
+            Maliyet = Maliyet,
+            Aciklama = Aciklama
+        };
+
+        await _bakimKaydiServisi.EkleAsync(kayit);
+        TempData["Basari"] = "Bakım kaydı eklendi.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> BakimSil(int id)
+    {
+        var silindi = await _bakimKaydiServisi.SilAsync(id);
+        return Json(silindi ? "başarılı" : "hata");
     }
 }

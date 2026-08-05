@@ -76,6 +76,7 @@
                 </td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-info btn-risk-hesapla" data-kid="@arac.Id">Risk Hesapla</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning btn-kayitlar" data-kid="@arac.Id" data-plaka="@arac.Plaka">Kayıtlar</button>
                     <button type="button" class="btn btn-sm btn-outline-primary"
                             data-bs-toggle="modal" data-bs-target="#duzenleModal"
                             data-id="@arac.Id"
@@ -274,6 +275,72 @@
     </div>
 </div>
 
+<!-- Arıza/Bakım Kayıtları Modal -->
+<div class="modal fade" id="kayitlarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kayitlar-baslik">Arıza / Bakım Kayıtları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-ariza">Arıza Kayıtları</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bakim">Bakım Kayıtları</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-ariza">
+                        <form asp-action="ArizaEkle" method="post" class="row g-2 mb-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="AracId" id="ariza-AracId" />
+                            <div class="col-md-4"><label class="form-label">Arıza Tarihi</label><input class="form-control" type="date" name="ArizaTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required /></div>
+                            <div class="col-md-4"><label class="form-label">Arıza Türü</label><input class="form-control" type="text" name="ArizaTuru" placeholder="örn. Fren, Motor" required /></div>
+                            <div class="col-md-4"><label class="form-label">Arıza Anındaki Km</label><input class="form-control" type="number" name="ArizaAnindakiKm" required /></div>
+                            <div class="col-md-8"><label class="form-label">Açıklama</label><input class="form-control" type="text" name="Aciklama" /></div>
+                            <div class="col-md-4"><label class="form-label">Onarım Maliyeti (₺)</label><input class="form-control" type="number" step="0.01" name="OnarimMaliyeti" required /></div>
+                            <div class="col-12"><button type="submit" class="btn btn-sm btn-primary">Arıza Kaydı Ekle</button></div>
+                        </form>
+                        <div id="ariza-liste-alani">
+                            <div class="text-center py-3">Yükleniyor...</div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-bakim">
+                        <form asp-action="BakimEkle" method="post" class="row g-2 mb-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="AracId" id="bakim-AracId" />
+                            <div class="col-md-4"><label class="form-label">Bakım Tarihi</label><input class="form-control" type="date" name="BakimTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" required /></div>
+                            <div class="col-md-4">
+                                <label class="form-label">Bakım Türü</label>
+                                <select class="form-select" name="BakimTuru" required>
+                                    <option value="periyodik">Periyodik</option>
+                                    <option value="ariza-sonrasi">Arıza Sonrası</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4"><label class="form-label">Maliyet (₺)</label><input class="form-control" type="number" step="0.01" name="Maliyet" required /></div>
+                            <div class="col-md-6"><label class="form-label">Sonraki Bakım Km</label><input class="form-control" type="number" name="SonrakiBakimKm" /></div>
+                            <div class="col-md-6"><label class="form-label">Sonraki Bakım Tarihi</label><input class="form-control" type="date" name="SonrakiBakimTarihi" /></div>
+                            <div class="col-12"><label class="form-label">Açıklama</label><input class="form-control" type="text" name="Aciklama" /></div>
+                            <div class="col-12"><button type="submit" class="btn btn-sm btn-primary">Bakım Kaydı Ekle</button></div>
+                        </form>
+                        <div id="bakim-liste-alani">
+                            <div class="text-center py-3">Yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.querySelectorAll('[data-bs-target="#duzenleModal"]').forEach(function (btn) {
@@ -361,7 +428,6 @@
                         var modal = new bootstrap.Modal(document.getElementById('riskModal'));
                         modal.show();
 
-                        // Tablodaki rozeti de güncelle
                         var renkSinifi = {
                             'Kritik': 'bg-danger',
                             'Yuksek': 'bg-warning text-dark',
@@ -373,6 +439,51 @@
                     },
                     error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
                 });
+            });
+        });
+
+        document.querySelectorAll('.btn-kayitlar').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-kid');
+                var plaka = btn.getAttribute('data-plaka');
+
+                document.getElementById('kayitlar-baslik').innerText = plaka + " — Arıza / Bakım Kayıtları";
+                document.getElementById('ariza-AracId').value = id;
+                document.getElementById('bakim-AracId').value = id;
+
+                document.getElementById('ariza-liste-alani').innerHTML = '<div class="text-center py-3">Yükleniyor...</div>';
+                document.getElementById('bakim-liste-alani').innerHTML = '<div class="text-center py-3">Yükleniyor...</div>';
+
+                $.get('/Arac/ArizaKayitlariPartial', { aracId: id }, function (html) {
+                    document.getElementById('ariza-liste-alani').innerHTML = html;
+                    document.querySelectorAll('.btn-ariza-sil').forEach(function (silBtn) {
+                        silBtn.addEventListener('click', function () {
+                            if (!confirm('Bu arıza kaydını silmek istediğinize emin misiniz?')) return;
+                            $.post('/Arac/ArizaSil', { id: silBtn.getAttribute('data-kid') }, function (sonuc) {
+                                if (sonuc === "başarılı") {
+                                    document.getElementById('ariza-row-' + silBtn.getAttribute('data-kid')).remove();
+                                }
+                            });
+                        });
+                    });
+                });
+
+                $.get('/Arac/BakimKayitlariPartial', { aracId: id }, function (html) {
+                    document.getElementById('bakim-liste-alani').innerHTML = html;
+                    document.querySelectorAll('.btn-bakim-sil').forEach(function (silBtn) {
+                        silBtn.addEventListener('click', function () {
+                            if (!confirm('Bu bakım kaydını silmek istediğinize emin misiniz?')) return;
+                            $.post('/Arac/BakimSil', { id: silBtn.getAttribute('data-kid') }, function (sonuc) {
+                                if (sonuc === "başarılı") {
+                                    document.getElementById('bakim-row-' + silBtn.getAttribute('data-kid')).remove();
+                                }
+                            });
+                        });
+                    });
+                });
+
+                var modal = new bootstrap.Modal(document.getElementById('kayitlarModal'));
+                modal.show();
             });
         });
     </script>

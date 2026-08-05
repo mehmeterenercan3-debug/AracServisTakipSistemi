@@ -9,36 +9,59 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AracServisTakipSistemi.Web.styles.css" asp-append-version="true" />
     <style>
-        body { background-color: #f4f6f9; }
+        body {
+            background-color: #f4f6f9;
+        }
+
         .app-sidebar {
             min-height: 100vh;
             background-color: #1e2a3a;
             width: 230px;
             position: fixed;
-            top: 0; left: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            bottom: 0;
             padding-top: 1rem;
             z-index: 100;
         }
-        .app-sidebar .brand {
-            color: #fff;
-            font-weight: 600;
-            font-size: 1.05rem;
-            padding: 0.5rem 1.25rem 1.25rem;
-            display: block;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 0.5rem;
+
+            .app-sidebar .brand {
+                color: #fff;
+                font-weight: 600;
+                font-size: 1.05rem;
+                padding: 0.5rem 1.25rem 1.25rem;
+                display: block;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 0.5rem;
+            }
+
+            .app-sidebar .nav-link {
+                color: rgba(255,255,255,0.75);
+                padding: 0.6rem 1.25rem;
+                font-size: 0.92rem;
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+            }
+
+                .app-sidebar .nav-link:hover {
+                    color: #fff;
+                    background-color: rgba(255,255,255,0.06);
+                }
+
+                .app-sidebar .nav-link.active {
+                    color: #fff;
+                    background-color: #2f6fed;
+                    border-radius: 6px;
+                    margin: 0 0.5rem;
+                    padding-left: 0.75rem;
+                    width: calc(100% - 1rem);
+                }
+
+        .app-content {
+            margin-left: 230px;
         }
-        .app-sidebar .nav-link {
-            color: rgba(255,255,255,0.75);
-            padding: 0.6rem 1.25rem;
-            font-size: 0.92rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .app-sidebar .nav-link:hover { color: #fff; background-color: rgba(255,255,255,0.06); }
-        .app-sidebar .nav-link.active { color: #fff; background-color: #2f6fed; border-radius: 6px; margin: 0 0.5rem; padding-left: 0.75rem; width: calc(100% - 1rem); }
-        .app-content { margin-left: 230px; }
+
         .app-topbar {
             background: #fff;
             border-bottom: 1px solid #e5e7eb;
@@ -48,10 +71,19 @@
             align-items: center;
             gap: 1rem;
         }
-        .app-main { padding: 1.75rem; }
+
+        .app-main {
+            padding: 1.75rem;
+        }
+
         @@media (max-width: 768px) {
-            .app-sidebar { display: none; }
-            .app-content { margin-left: 0; }
+            .app-sidebar {
+                display: none;
+            }
+
+            .app-content {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -59,7 +91,6 @@
     @{
         bool girisliVeAdmin = User.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
     }
-
     @if (girisliVeAdmin)
     {
         <nav class="app-sidebar">
@@ -92,10 +123,14 @@
                         <i class="bi bi-clock"></i> Vardiyalar
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Rota" ? "active" : "")" asp-controller="Rota" asp-action="Index">
+                        <i class="bi bi-signpost-split"></i> Rota Hesaplama
+                    </a>
+                </li>
             </ul>
         </nav>
     }
-
     <div class="@(girisliVeAdmin ? "app-content" : "")">
         <div class="app-topbar">
             @if (User.Identity?.IsAuthenticated == true)
@@ -110,12 +145,10 @@
                 <a class="btn btn-sm btn-primary" asp-controller="Hesap" asp-action="Giris">Giriş Yap</a>
             }
         </div>
-
         <main class="app-main">
             @RenderBody()
         </main>
     </div>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

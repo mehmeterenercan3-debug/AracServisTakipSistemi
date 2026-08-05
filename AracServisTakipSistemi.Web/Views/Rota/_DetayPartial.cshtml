@@ -1,0 +1,45 @@
+﻿@using AracServisTakipSistemi.Web.Models
+@model RotaViewModel
+
+<div class="row mb-2">
+    <div class="col-md-6"><strong>Rota ID:</strong> #@Model.Id</div>
+    <div class="col-md-6"><strong>Durum:</strong> @Model.Durum</div>
+</div>
+<div class="row mb-2">
+    <div class="col-md-6"><strong>Araç Plaka:</strong> @Model.AracPlaka</div>
+    <div class="col-md-6"><strong>Toplam Mesafe:</strong> @Model.ToplamMesafeKm km</div>
+</div>
+<div class="row mb-3">
+    <div class="col-md-6"><strong>Tahmini Süre:</strong> @Model.TahminiSureDk dk</div>
+    <div class="col-md-6"><strong>Rota Tarihi:</strong> @Model.RotaTarihi.ToString("dd.MM.yyyy")</div>
+</div>
+
+<hr />
+<h6>Rota Durakları</h6>
+
+@if (Model.Duraklar != null && Model.Duraklar.Any())
+{
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Sıra</th>
+                <th>Personel</th>
+                <th>Tahmini Varış</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var durak in Model.Duraklar)
+            {
+                <tr>
+                    <td>@durak.SiraNo</td>
+                    <td>@durak.PersonelAdSoyad</td>
+                    <td>@durak.VarisSaati</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Bu rotaya ait durak bilgisi bulunamadı.</p>
+}

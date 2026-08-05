@@ -1,0 +1,37 @@
+﻿@using AracServisTakipSistemi.Entities.Entities
+@model List<BakimKaydi>
+
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Bakım Türü</th>
+            <th>Sonraki Bakım (Km)</th>
+            <th>Sonraki Bakım (Tarih)</th>
+            <th>Maliyet</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kayit in Model)
+        {
+            <tr id="bakim-row-@kayit.Id">
+                <td>@kayit.BakimTarihi.ToString("dd.MM.yyyy")</td>
+                <td>@kayit.BakimTuru</td>
+                <td>@(kayit.SonrakiBakimKm?.ToString() ?? "-")</td>
+                <td>@(kayit.SonrakiBakimTarihi?.ToString("dd.MM.yyyy") ?? "-")</td>
+                <td>@kayit.Maliyet ₺</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-bakim-sil" data-kid="@kayit.Id">
+                        Sil
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bu araca ait bakım kaydı yok.</p>
+}

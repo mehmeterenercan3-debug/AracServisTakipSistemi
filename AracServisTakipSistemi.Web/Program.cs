@@ -33,7 +33,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Hesap/Giris";
     options.AccessDeniedPath = "/Hesap/Erisimyok";
 });
-
 // Repository'ler
 builder.Services.AddScoped<IPersonelRepository, PersonelRepository>();
 builder.Services.AddScoped<IPersonelAdresRepository, PersonelAdresRepository>();
@@ -42,6 +41,8 @@ builder.Services.AddScoped<ISemtReferansRepository, SemtReferansRepository>();
 builder.Services.AddScoped<IVardiyaRepository, VardiyaRepository>();
 builder.Services.AddScoped<IBolgeRepository, BolgeRepository>();
 builder.Services.AddScoped<IRotaRepository, RotaRepository>();
+builder.Services.AddScoped<IAracArizaKaydiRepository, AracArizaKaydiRepository>();
+builder.Services.AddScoped<IBakimKaydiRepository, BakimKaydiRepository>();
 
 // Servisler
 builder.Services.AddScoped<IMesafeHesaplayici, HaversineMesafeHesaplayici>();
@@ -54,6 +55,9 @@ builder.Services.AddScoped<SemtReferansServisi>();
 builder.Services.AddScoped<BolgeServisi>();
 builder.Services.AddScoped<RotaYenidenHesaplamaOrkestraServisi>();
 builder.Services.AddScoped<VardiyaServisi>();
+builder.Services.AddScoped<RotaServisi>();
+builder.Services.AddScoped<AracArizaKaydiServisi>();
+builder.Services.AddScoped<BakimKaydiServisi>();
 
 // Sunucu her zaman nokta = ondalık ayıracı kullansın (tr-TR virgül bekleyip veri bozulmasın diye)
 var desteklenenKulturler = new[] { new CultureInfo("en-US") };
