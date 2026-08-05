@@ -62,7 +62,8 @@ public class AracController : Controller
             var hatalar = ModelState
                 .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
                 .Select(kv => $"{kv.Key}: {string.Join(", ", kv.Value!.Errors.Select(e => e.ErrorMessage))}");
-            TempData["Hata"] = "Formda hata var — " + string.Join(" | ", hatalar);
+            var hamForm = string.Join(" || ", Request.Form.Select(kv => $"{kv.Key}=[{kv.Value}]"));
+            TempData["Hata"] = $"HATALAR: {string.Join(" | ", hatalar)} --- HAM FORM VERISI: {hamForm}";
         }
 
         return RedirectToAction(nameof(Index));
