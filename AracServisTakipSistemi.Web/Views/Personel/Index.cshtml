@@ -1,13 +1,18 @@
 @model List<AracServisTakipSistemi.Entities.Entities.Personel>
 @using AracServisTakipSistemi.Entities.Enums
+@using AracServisTakipSistemi.Entities.Entities
 @{
     ViewData["Title"] = "Personel";
-    var vardiyalar = ViewBag.Vardiyalar as List<AracServisTakipSistemi.Entities.Entities.Vardiya>;
+    var vardiyalar = ViewBag.Vardiyalar as List<Vardiya>;
+    var adresler = ViewBag.Adresler as Dictionary<int, PersonelAdres?>;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Personel</h2>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Personel</button>
+    <div>
+        <button type="button" class="btn btn-outline-warning" id="btnBolgeleriYenidenHesapla">Bölgeleri Yeniden Hesapla</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Personel</button>
+    </div>
 </div>
 
 @if (TempData["Basari"] != null)
@@ -34,6 +39,7 @@
     <tbody>
         @foreach (var personel in Model)
         {
+            var adres = (adresler != null && adresler.ContainsKey(personel.Id)) ? adresler[personel.Id] : null;
             <tr>
                 <td>@personel.SicilNo</td>
                 <td>@personel.Ad @personel.Soyad</td>
@@ -72,7 +78,14 @@
                             data-telefon="@personel.Telefon"
                             data-eposta="@personel.Eposta"
                             data-isegiris="@personel.IseGirisTarihi.ToString("yyyy-MM-dd")"
-                            data-vardiyaid="@personel.VardiyaId">
+                            data-vardiyaid="@personel.VardiyaId"
+                            data-mahalle="@(adres?.Mahalle)"
+                            data-semt="@(adres?.Semt)"
+                            data-ilceadi="@(adres?.IlceAdi)"
+                            data-sehir="@(adres?.Sehir)"
+                            data-sokak="@(adres?.Sokak)"
+                            data-apartmanno="@(adres?.ApartmanNo)"
+                            data-diskapino="@(adres?.DisKapiNo)">
                         Düzenle
                     </button>
                     @if (personel.AktifMi)
@@ -206,9 +219,9 @@
     </div>
 </div>
 
-<!-- Düzenle Modal (adres burada yok, sadece kişisel bilgiler) -->
+<!-- Düzenle Modal -->
 <div class="modal fade" id="duzenleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form asp-action="Edit" method="post">
                 <div class="modal-header">
@@ -218,53 +231,96 @@
                 <div class="modal-body">
                     <input type="hidden" id="edit-Id" name="Id" />
 
-                    <label class="form-label">Ad</label>
-                    <input class="form-control" type="text" id="edit-Ad" name="Ad" /><br />
+                    <h6 class="text-muted">Kişisel Bilgiler</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Ad</label>
+                            <input class="form-control" type="text" id="edit-Ad" name="Ad" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Soyad</label>
+                            <input class="form-control" type="text" id="edit-Soyad" name="Soyad" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Sicil No</label>
+                            <input class="form-control" type="text" id="edit-SicilNo" name="SicilNo" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Personel Türü</label>
+                            <select class="form-select" id="edit-PersonelTuru" name="PersonelTuru">
+                                <option value="0">Çalışan</option>
+                                <option value="1">Şoför</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Cinsiyet</label>
+                            <select class="form-select" id="edit-Cinsiyet" name="Cinsiyet">
+                                <option value="Kadın">Kadın</option>
+                                <option value="Erkek">Erkek</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Doğum Tarihi</label>
+                            <input class="form-control" type="date" id="edit-DogumTarihi" name="DogumTarihi" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Telefon</label>
+                            <input class="form-control" type="text" id="edit-Telefon" name="Telefon" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">E-posta</label>
+                            <input class="form-control" type="email" id="edit-Eposta" name="Eposta" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">İşe Giriş Tarihi</label>
+                            <input class="form-control" type="date" id="edit-IseGirisTarihi" name="IseGirisTarihi" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Vardiya</label>
+                            <select class="form-select" id="edit-VardiyaId" name="VardiyaId">
+                                <option value="">-- Vardiya seçin --</option>
+                                @if (vardiyalar != null)
+                                {
+                                    @foreach (var vardiya in vardiyalar)
+                                    {
+                                        <option value="@vardiya.Id">@vardiya.VardiyaAdi</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
 
-                    <label class="form-label">Soyad</label>
-                    <input class="form-control" type="text" id="edit-Soyad" name="Soyad" /><br />
-
-                    <label class="form-label">Sicil No</label>
-                    <input class="form-control" type="text" id="edit-SicilNo" name="SicilNo" /><br />
-
-                    <label class="form-label">Personel Türü</label>
-                    <select class="form-select" id="edit-PersonelTuru" name="PersonelTuru">
-                        <option value="0">Çalışan</option>
-                        <option value="1">Şoför</option>
-                    </select><br />
-
-                    <label class="form-label">Cinsiyet</label>
-                    <select class="form-select" id="edit-Cinsiyet" name="Cinsiyet">
-                        <option value="Kadın">Kadın</option>
-                        <option value="Erkek">Erkek</option>
-                    </select><br />
-
-                    <label class="form-label">Doğum Tarihi</label>
-                    <input class="form-control" type="date" id="edit-DogumTarihi" name="DogumTarihi" /><br />
-
-                    <label class="form-label">Telefon</label>
-                    <input class="form-control" type="text" id="edit-Telefon" name="Telefon" /><br />
-
-                    <label class="form-label">E-posta</label>
-                    <input class="form-control" type="email" id="edit-Eposta" name="Eposta" /><br />
-
-                    <label class="form-label">İşe Giriş Tarihi</label>
-                    <input class="form-control" type="date" id="edit-IseGirisTarihi" name="IseGirisTarihi" /><br />
-
-                    <label class="form-label">Vardiya</label>
-                    <select class="form-select" id="edit-VardiyaId" name="VardiyaId">
-                        <option value="">-- Vardiya seçin --</option>
-                        @if (vardiyalar != null)
-                        {
-                            @foreach (var vardiya in vardiyalar)
-                            {
-                                <option value="@vardiya.Id">@vardiya.VardiyaAdi</option>
-                            }
-                        }
-                    </select>
-
-                    <div class="alert alert-info mt-3 mb-0">
-                        Adres/konum düzenleme henüz bu ekranda yok, ayrı bir adımda eklenecek.
+                    <hr />
+                    <h6 class="text-muted">İkametgah Adresi <small>(değiştirirseniz konum yeniden hesaplanıp bölge yeniden atanır)</small></h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Şehir</label>
+                            <input class="form-control" type="text" id="edit-Sehir" name="Sehir" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">İlçe</label>
+                            <input class="form-control" type="text" id="edit-IlceAdi" name="IlceAdi" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Semt</label>
+                            <input class="form-control" type="text" id="edit-Semt" name="Semt" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Mahalle</label>
+                            <input class="form-control" type="text" id="edit-Mahalle" name="Mahalle" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Sokak</label>
+                            <input class="form-control" type="text" id="edit-Sokak" name="Sokak" />
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Apartman No</label>
+                            <input class="form-control" type="text" id="edit-ApartmanNo" name="ApartmanNo" />
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Dış Kapı No</label>
+                            <input class="form-control" type="text" id="edit-DisKapiNo" name="DisKapiNo" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -310,6 +366,13 @@
                 document.getElementById('edit-Eposta').value = btn.getAttribute('data-eposta') || '';
                 document.getElementById('edit-IseGirisTarihi').value = btn.getAttribute('data-isegiris');
                 document.getElementById('edit-VardiyaId').value = btn.getAttribute('data-vardiyaid') || '';
+                document.getElementById('edit-Sehir').value = btn.getAttribute('data-sehir') || '';
+                document.getElementById('edit-IlceAdi').value = btn.getAttribute('data-ilceadi') || '';
+                document.getElementById('edit-Semt').value = btn.getAttribute('data-semt') || '';
+                document.getElementById('edit-Mahalle').value = btn.getAttribute('data-mahalle') || '';
+                document.getElementById('edit-Sokak').value = btn.getAttribute('data-sokak') || '';
+                document.getElementById('edit-ApartmanNo').value = btn.getAttribute('data-apartmanno') || '';
+                document.getElementById('edit-DisKapiNo').value = btn.getAttribute('data-diskapino') || '';
             });
         });
 
@@ -322,11 +385,8 @@
                     type: 'POST',
                     data: { id: id },
                     success: function (sonuc) {
-                        if (sonuc === "başarılı") {
-                            location.reload();
-                        } else {
-                            alert("Bir hata oluştu, tekrar deneyin.");
-                        }
+                        if (sonuc === "başarılı") { location.reload(); }
+                        else { alert("Bir hata oluştu, tekrar deneyin."); }
                     }
                 });
             });
@@ -350,14 +410,25 @@
                 type: 'POST',
                 data: { id: silinecekId },
                 success: function (sonuc) {
-                    if (sonuc === "başarılı") {
-                        location.reload();
-                    } else {
-                        alert("Bu personel bir rotada veya şoför olarak atanmış olduğu için silinemedi. Önce 'İşten Çıkar' kullanın.");
-                    }
+                    if (sonuc === "başarılı") { location.reload(); }
+                    else { alert("Bu personel bir rotada veya şoför olarak atanmış olduğu için silinemedi. Önce 'İşten Çıkar' kullanın."); }
+                },
+                error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+            });
+        });
+
+        document.getElementById('btnBolgeleriYenidenHesapla').addEventListener('click', function () {
+            if (!confirm('Tüm aktif personelin bölge ataması, güncel bölge tablosuna göre yeniden hesaplanacak. Devam edilsin mi?')) return;
+
+            $.ajax({
+                url: '/Personel/BolgeleriYenidenHesapla',
+                type: 'POST',
+                success: function (sonuc) {
+                    alert(sonuc.guncellenen + ' personelin bölgesi güncellendi.');
+                    location.reload();
                 },
                 error: function () {
-                    alert("Bir hata oluştu, tekrar deneyin.");
+                    alert('Bir hata oluştu, tekrar deneyin.');
                 }
             });
         });
