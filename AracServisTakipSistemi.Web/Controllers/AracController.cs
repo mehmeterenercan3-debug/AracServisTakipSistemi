@@ -31,80 +31,102 @@ public class AracController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(AracViewModel model)
+    public async Task<IActionResult> Create(
+        [FromForm] string Plaka,
+        [FromForm] string Marka,
+        [FromForm] string Model,
+        [FromForm] string AracTipi,
+        [FromForm] int ModelYili,
+        [FromForm] double GuncelKm,
+        [FromForm] DateTime SatinAlmaTarihi,
+        [FromForm] int KapasiteSayisi,
+        [FromForm] bool BakimdaMi,
+        [FromForm] string? SasiNo,
+        [FromForm] string? MotorNo,
+        [FromForm] DateTime? MuayeneTarihi,
+        [FromForm] DateTime? SigortaBitisTarihi,
+        [FromForm] int? SoforPersonelId,
+        [FromForm] bool AktifMi)
     {
-        if (ModelState.IsValid)
+        if (string.IsNullOrWhiteSpace(Plaka) || string.IsNullOrWhiteSpace(Marka) ||
+            string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(AracTipi))
         {
-            var arac = new Arac
-            {
-                Plaka = model.Plaka,
-                Marka = model.Marka,
-                Model = model.Model,
-                AracTipi = model.AracTipi,
-                ModelYili = model.ModelYili,
-                GuncelKm = model.GuncelKm,
-                SatinAlmaTarihi = model.SatinAlmaTarihi,
-                KapasiteSayisi = model.KapasiteSayisi,
-                BakimdaMi = model.BakimdaMi,
-                SasiNo = model.SasiNo,
-                MotorNo = model.MotorNo,
-                MuayeneTarihi = model.MuayeneTarihi,
-                SigortaBitisTarihi = model.SigortaBitisTarihi,
-                SoforPersonelId = model.SoforPersonelId,
-                AktifMi = model.AktifMi
-            };
-
-            await _aracServisi.AracEkleAsync(arac);
-            TempData["Basari"] = "Araç başarıyla eklendi.";
-        }
-        else
-        {
-            var hatalar = ModelState
-                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
-                .Select(kv => $"{kv.Key}: {string.Join(", ", kv.Value!.Errors.Select(e => e.ErrorMessage))}");
-            var hamForm = string.Join(" || ", Request.Form.Select(kv => $"{kv.Key}=[{kv.Value}]"));
-            TempData["Hata"] = $"HATALAR: {string.Join(" | ", hatalar)} --- HAM FORM VERISI: {hamForm}";
+            TempData["Hata"] = "Plaka, Marka, Model ve Araç Tipi zorunludur.";
+            return RedirectToAction(nameof(Index));
         }
 
+        var arac = new Arac
+        {
+            Plaka = Plaka,
+            Marka = Marka,
+            Model = Model,
+            AracTipi = AracTipi,
+            ModelYili = ModelYili,
+            GuncelKm = GuncelKm,
+            SatinAlmaTarihi = SatinAlmaTarihi,
+            KapasiteSayisi = KapasiteSayisi,
+            BakimdaMi = BakimdaMi,
+            SasiNo = SasiNo,
+            MotorNo = MotorNo,
+            MuayeneTarihi = MuayeneTarihi,
+            SigortaBitisTarihi = SigortaBitisTarihi,
+            SoforPersonelId = SoforPersonelId,
+            AktifMi = AktifMi
+        };
+
+        await _aracServisi.AracEkleAsync(arac);
+        TempData["Basari"] = "Araç başarıyla eklendi.";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(AracViewModel model)
+    public async Task<IActionResult> Edit(
+        [FromForm] int Id,
+        [FromForm] string Plaka,
+        [FromForm] string Marka,
+        [FromForm] string Model,
+        [FromForm] string AracTipi,
+        [FromForm] int ModelYili,
+        [FromForm] double GuncelKm,
+        [FromForm] DateTime SatinAlmaTarihi,
+        [FromForm] int KapasiteSayisi,
+        [FromForm] bool BakimdaMi,
+        [FromForm] string? SasiNo,
+        [FromForm] string? MotorNo,
+        [FromForm] DateTime? MuayeneTarihi,
+        [FromForm] DateTime? SigortaBitisTarihi,
+        [FromForm] int? SoforPersonelId,
+        [FromForm] bool AktifMi)
     {
-        if (ModelState.IsValid)
+        if (string.IsNullOrWhiteSpace(Plaka) || string.IsNullOrWhiteSpace(Marka) ||
+            string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(AracTipi))
         {
-            var arac = await _aracServisi.AracGetirAsync(model.Id);
-            if (arac == null) return NotFound();
-
-            arac.Plaka = model.Plaka;
-            arac.Marka = model.Marka;
-            arac.Model = model.Model;
-            arac.AracTipi = model.AracTipi;
-            arac.ModelYili = model.ModelYili;
-            arac.GuncelKm = model.GuncelKm;
-            arac.SatinAlmaTarihi = model.SatinAlmaTarihi;
-            arac.KapasiteSayisi = model.KapasiteSayisi;
-            arac.BakimdaMi = model.BakimdaMi;
-            arac.SasiNo = model.SasiNo;
-            arac.MotorNo = model.MotorNo;
-            arac.MuayeneTarihi = model.MuayeneTarihi;
-            arac.SigortaBitisTarihi = model.SigortaBitisTarihi;
-            arac.SoforPersonelId = model.SoforPersonelId;
-            arac.AktifMi = model.AktifMi;
-
-            await _aracServisi.AracGuncelleAsync(arac);
-            TempData["Basari"] = "Araç başarıyla güncellendi.";
-        }
-        else
-        {
-            var hatalar = ModelState
-                .Where(kv => kv.Value != null && kv.Value.Errors.Count > 0)
-                .Select(kv => $"{kv.Key}: {string.Join(", ", kv.Value!.Errors.Select(e => e.ErrorMessage))}");
-            TempData["Hata"] = "Formda hata var — " + string.Join(" | ", hatalar);
+            TempData["Hata"] = "Plaka, Marka, Model ve Araç Tipi zorunludur.";
+            return RedirectToAction(nameof(Index));
         }
 
+        var arac = await _aracServisi.AracGetirAsync(Id);
+        if (arac == null) return NotFound();
+
+        arac.Plaka = Plaka;
+        arac.Marka = Marka;
+        arac.Model = Model;
+        arac.AracTipi = AracTipi;
+        arac.ModelYili = ModelYili;
+        arac.GuncelKm = GuncelKm;
+        arac.SatinAlmaTarihi = SatinAlmaTarihi;
+        arac.KapasiteSayisi = KapasiteSayisi;
+        arac.BakimdaMi = BakimdaMi;
+        arac.SasiNo = SasiNo;
+        arac.MotorNo = MotorNo;
+        arac.MuayeneTarihi = MuayeneTarihi;
+        arac.SigortaBitisTarihi = SigortaBitisTarihi;
+        arac.SoforPersonelId = SoforPersonelId;
+        arac.AktifMi = AktifMi;
+
+        await _aracServisi.AracGuncelleAsync(arac);
+        TempData["Basari"] = "Araç başarıyla güncellendi.";
         return RedirectToAction(nameof(Index));
     }
 
