@@ -15,5 +15,6 @@ public interface IPersonelRepository
     Task<Personel?> IdIleGetirAsync(int id);
     Task EkleAsync(Personel personel);
     Task GuncelleAsync(Personel personel);
+    Task<bool> SilAsync(int id);
     Task KaydetAsync();
 }

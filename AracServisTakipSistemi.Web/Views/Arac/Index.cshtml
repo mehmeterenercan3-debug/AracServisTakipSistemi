@@ -1,0 +1,379 @@
+@model List<AracServisTakipSistemi.Entities.Entities.Arac>
+@{
+    ViewData["Title"] = "Araçlar";
+    var soforler = ViewBag.Soforler as List<AracServisTakipSistemi.Entities.Entities.Personel>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Araçlar</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Araç</button>
+</div>
+
+@if (TempData["Basari"] != null)
+{
+    <div class="alert alert-success">@TempData["Basari"]</div>
+}
+@if (TempData["Hata"] != null)
+{
+    <div class="alert alert-danger">@TempData["Hata"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Plaka</th>
+            <th>Marka / Model</th>
+            <th>Yıl</th>
+            <th>Km</th>
+            <th>Kapasite</th>
+            <th>Şoför</th>
+            <th>Risk</th>
+            <th>Durum</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var arac in Model)
+        {
+            var sonRisk = arac.RiskSkorlari.OrderByDescending(r => r.HesaplamaTarihi).FirstOrDefault();
+            <tr id="arac-satir-@arac.Id">
+                <td>@arac.Plaka</td>
+                <td>@arac.Marka @arac.Model</td>
+                <td>@arac.ModelYili</td>
+                <td>@arac.GuncelKm.ToString("N0")</td>
+                <td>@arac.KapasiteSayisi</td>
+                <td>@(arac.SoforPersonel != null ? $"{arac.SoforPersonel.Ad} {arac.SoforPersonel.Soyad}" : "-")</td>
+                <td id="risk-@arac.Id">
+                    @if (sonRisk != null)
+                    {
+                        var renk = sonRisk.RiskSeviyesi.ToString() switch
+                        {
+                            "Kritik" => "bg-danger",
+                            "Yuksek" => "bg-warning text-dark",
+                            "Orta" => "bg-info text-dark",
+                            _ => "bg-success"
+                        };
+                        <span class="badge @renk">@sonRisk.RiskSeviyesi (@sonRisk.SkorDegeri)</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Hesaplanmadı</span>
+                    }
+                </td>
+                <td>
+                    @if (arac.BakimdaMi)
+                    {
+                        <span class="badge bg-warning text-dark">Bakımda</span>
+                    }
+                    else if (arac.AktifMi)
+                    {
+                        <span class="badge bg-success">Aktif</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Pasif</span>
+                    }
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-info btn-risk-hesapla" data-kid="@arac.Id">Risk Hesapla</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#duzenleModal"
+                            data-id="@arac.Id"
+                            data-plaka="@arac.Plaka"
+                            data-marka="@arac.Marka"
+                            data-model="@arac.Model"
+                            data-tip="@arac.AracTipi"
+                            data-yil="@arac.ModelYili"
+                            data-km="@arac.GuncelKm"
+                            data-satinalma="@arac.SatinAlmaTarihi.ToString("yyyy-MM-dd")"
+                            data-kapasite="@arac.KapasiteSayisi"
+                            data-bakimda="@arac.BakimdaMi.ToString().ToLower()"
+                            data-sasino="@arac.SasiNo"
+                            data-motorno="@arac.MotorNo"
+                            data-muayene="@arac.MuayeneTarihi?.ToString("yyyy-MM-dd")"
+                            data-sigorta="@arac.SigortaBitisTarihi?.ToString("yyyy-MM-dd")"
+                            data-soforid="@arac.SoforPersonelId"
+                            data-aktif="@arac.AktifMi.ToString().ToLower()">
+                        Düzenle
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-durum-degistir" data-kid="@arac.Id">
+                        @(arac.AktifMi ? "Pasife Al" : "Aktif Et")
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#silModal"
+                            data-kid="@arac.Id" data-ad="@arac.Plaka">
+                        Sil
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz araç eklenmemiş.</p>
+}
+
+<!-- Ekle Modal -->
+<div class="modal fade" id="ekleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Araç Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2"><label class="form-label">Plaka</label><input class="form-control" type="text" name="Plaka" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Marka</label><input class="form-control" type="text" name="Marka" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Model</label><input class="form-control" type="text" name="Model" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Araç Tipi</label><input class="form-control" type="text" name="AracTipi" placeholder="örn. Minibüs" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Model Yılı</label><input class="form-control" type="number" name="ModelYili" value="@DateTime.Now.Year" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Güncel Km</label><input class="form-control" type="number" name="GuncelKm" value="0" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Satın Alma Tarihi</label><input class="form-control" type="date" name="SatinAlmaTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Kapasite</label><input class="form-control" type="number" name="KapasiteSayisi" value="14" /></div>
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="BakimdaMi" value="true" />
+                                <label class="form-check-label">Bakımda</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Şasi No</label><input class="form-control" type="text" name="SasiNo" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Motor No</label><input class="form-control" type="text" name="MotorNo" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Muayene Tarihi</label><input class="form-control" type="date" name="MuayeneTarihi" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Sigorta Bitiş Tarihi</label><input class="form-control" type="date" name="SigortaBitisTarihi" /></div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Şoför</label>
+                            <select class="form-select" name="SoforPersonelId">
+                                <option value="">-- Şoför seçin --</option>
+                                @if (soforler != null)
+                                {
+                                    @foreach (var sofor in soforler)
+                                    {
+                                        <option value="@sofor.Id">@sofor.Ad @sofor.Soyad</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="AktifMi" value="true" checked />
+                                <label class="form-check-label">Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Düzenle Modal -->
+<div class="modal fade" id="duzenleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Edit" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Araç Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-Id" name="Id" />
+                    <div class="row">
+                        <div class="col-md-4 mb-2"><label class="form-label">Plaka</label><input class="form-control" type="text" id="edit-Plaka" name="Plaka" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Marka</label><input class="form-control" type="text" id="edit-Marka" name="Marka" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Model</label><input class="form-control" type="text" id="edit-Model" name="Model" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Araç Tipi</label><input class="form-control" type="text" id="edit-AracTipi" name="AracTipi" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Model Yılı</label><input class="form-control" type="number" id="edit-ModelYili" name="ModelYili" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Güncel Km</label><input class="form-control" type="number" id="edit-GuncelKm" name="GuncelKm" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Satın Alma Tarihi</label><input class="form-control" type="date" id="edit-SatinAlmaTarihi" name="SatinAlmaTarihi" /></div>
+                        <div class="col-md-4 mb-2"><label class="form-label">Kapasite</label><input class="form-control" type="number" id="edit-KapasiteSayisi" name="KapasiteSayisi" /></div>
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="edit-BakimdaMi" name="BakimdaMi" value="true" />
+                                <label class="form-check-label">Bakımda</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Şasi No</label><input class="form-control" type="text" id="edit-SasiNo" name="SasiNo" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Motor No</label><input class="form-control" type="text" id="edit-MotorNo" name="MotorNo" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Muayene Tarihi</label><input class="form-control" type="date" id="edit-MuayeneTarihi" name="MuayeneTarihi" /></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Sigorta Bitiş Tarihi</label><input class="form-control" type="date" id="edit-SigortaBitisTarihi" name="SigortaBitisTarihi" /></div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Şoför</label>
+                            <select class="form-select" id="edit-SoforPersonelId" name="SoforPersonelId">
+                                <option value="">-- Şoför seçin --</option>
+                                @if (soforler != null)
+                                {
+                                    @foreach (var sofor in soforler)
+                                    {
+                                        <option value="@sofor.Id">@sofor.Ad @sofor.Soyad</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="edit-AktifMi" name="AktifMi" value="true" />
+                                <label class="form-check-label">Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Sil Onay Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aracı Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="sil-mesaj"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="silOnaylaBtn">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Sonucu Modal -->
+<div class="modal fade" id="riskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="risk-baslik">Risk Sonucu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Risk Puanı:</strong> <span id="risk-puan"></span> / 100</p>
+                <p><strong>Risk Seviyesi:</strong> <span id="risk-seviye"></span></p>
+                <strong>Öneriler:</strong>
+                <ul id="risk-oneriler"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-bs-target="#duzenleModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.getElementById('edit-Id').value = btn.getAttribute('data-id');
+                document.getElementById('edit-Plaka').value = btn.getAttribute('data-plaka');
+                document.getElementById('edit-Marka').value = btn.getAttribute('data-marka');
+                document.getElementById('edit-Model').value = btn.getAttribute('data-model');
+                document.getElementById('edit-AracTipi').value = btn.getAttribute('data-tip');
+                document.getElementById('edit-ModelYili').value = btn.getAttribute('data-yil');
+                document.getElementById('edit-GuncelKm').value = btn.getAttribute('data-km');
+                document.getElementById('edit-SatinAlmaTarihi').value = btn.getAttribute('data-satinalma');
+                document.getElementById('edit-KapasiteSayisi').value = btn.getAttribute('data-kapasite');
+                document.getElementById('edit-BakimdaMi').checked = (btn.getAttribute('data-bakimda') === 'true');
+                document.getElementById('edit-SasiNo').value = btn.getAttribute('data-sasino') || '';
+                document.getElementById('edit-MotorNo').value = btn.getAttribute('data-motorno') || '';
+                document.getElementById('edit-MuayeneTarihi').value = btn.getAttribute('data-muayene') || '';
+                document.getElementById('edit-SigortaBitisTarihi').value = btn.getAttribute('data-sigorta') || '';
+                document.getElementById('edit-SoforPersonelId').value = btn.getAttribute('data-soforid') || '';
+                document.getElementById('edit-AktifMi').checked = (btn.getAttribute('data-aktif') === 'true');
+            });
+        });
+
+        document.querySelectorAll('.btn-durum-degistir').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Arac/DurumDegistir',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (sonuc === "başarılı") { location.reload(); }
+                        else { alert("Bir hata oluştu, tekrar deneyin."); }
+                    }
+                });
+            });
+        });
+
+        var silinecekId = null;
+        document.querySelectorAll('[data-bs-target="#silModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                silinecekId = btn.getAttribute('data-kid');
+                var ad = btn.getAttribute('data-ad');
+                document.getElementById('sil-mesaj').innerText =
+                    "'" + ad + "' plakalı aracı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
+            });
+        });
+
+        document.getElementById('silOnaylaBtn').addEventListener('click', function () {
+            if (!silinecekId) return;
+            $.ajax({
+                url: '/Arac/Sil',
+                type: 'POST',
+                data: { id: silinecekId },
+                success: function (sonuc) {
+                    if (sonuc === "başarılı") { location.reload(); }
+                    else { alert("Bu araca bağlı rota kayıtları olduğu için silinemedi. Önce 'Pasife Al' kullanın."); }
+                },
+                error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+            });
+        });
+
+        document.querySelectorAll('.btn-risk-hesapla').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Arac/RiskHesapla',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (!sonuc.basarili) {
+                            alert("Risk hesaplanamadı.");
+                            return;
+                        }
+                        document.getElementById('risk-baslik').innerText = sonuc.plaka + " — Risk Sonucu";
+                        document.getElementById('risk-puan').innerText = sonuc.puan;
+                        document.getElementById('risk-seviye').innerText = sonuc.seviye;
+                        var liste = document.getElementById('risk-oneriler');
+                        liste.innerHTML = '';
+                        sonuc.oneriler.forEach(function (oneri) {
+                            var li = document.createElement('li');
+                            li.innerText = oneri;
+                            liste.appendChild(li);
+                        });
+                        var modal = new bootstrap.Modal(document.getElementById('riskModal'));
+                        modal.show();
+
+                        // Tablodaki rozeti de güncelle
+                        var renkSinifi = {
+                            'Kritik': 'bg-danger',
+                            'Yuksek': 'bg-warning text-dark',
+                            'Orta': 'bg-info text-dark',
+                            'Dusuk': 'bg-success'
+                        }[sonuc.seviye] || 'bg-secondary';
+                        document.getElementById('risk-' + id).innerHTML =
+                            '<span class="badge ' + renkSinifi + '">' + sonuc.seviye + ' (' + sonuc.puan + ')</span>';
+                    },
+                    error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+                });
+            });
+        });
+    </script>
+}

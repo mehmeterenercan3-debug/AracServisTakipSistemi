@@ -36,15 +36,12 @@ public class AracServisi
         await _repository.KaydetAsync();
     }
 
-    public async Task BakimaAlAsync(int aracId)
+    public async Task<bool> AracSilAsync(int id)
     {
-        var arac = await _repository.IdIleGetirAsync(aracId);
-        if (arac == null) return;
+        var silindiMi = await _repository.SilAsync(id);
+        if (silindiMi)
+            await _repository.KaydetAsync();
 
-        arac.BakimdaMi = true;
-        arac.AktifMi = false;
-
-        await _repository.GuncelleAsync(arac);
-        await _repository.KaydetAsync();
+        return silindiMi;
     }
 }

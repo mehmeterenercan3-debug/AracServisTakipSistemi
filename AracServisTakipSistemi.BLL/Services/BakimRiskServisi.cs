@@ -87,20 +87,24 @@ public class BakimRiskServisi
         };
     }
 
-    public async Task<BakimRiskSonucu> RiskHesaplaVeKaydetAsync(Arac arac)
+    public async Task<BakimRiskSonucu> RiskHesaplaVeKaydetAsync(int aracId)
     {
+        var arac = await _aracRepository.IdIleGetirAsync(aracId);
+        if (arac == null)
+            throw new ArgumentException("Araç bulunamadı.", nameof(aracId));
+
         var sonuc = RiskHesapla(arac);
 
-        arac.RiskSkorlari.Add(new RiskSkoru
+        var riskSkoru = new RiskSkoru
         {
             AracId = arac.Id,
             SkorDegeri = sonuc.RiskPuani,
             RiskSeviyesi = sonuc.RiskSeviyesi,
             HesaplamaTarihi = DateTime.Now,
             OnerilenAksiyon = string.Join(" | ", sonuc.Oneriler)
-        });
+        };
 
-        await _aracRepository.GuncelleAsync(arac);
+        await _aracRepository.RiskSkoruEkleAsync(riskSkoru);
         await _aracRepository.KaydetAsync();
 
         return sonuc;

@@ -15,5 +15,7 @@ public interface IAracRepository
     Task<Arac?> IdIleGetirAsync(int id);
     Task EkleAsync(Arac arac);
     Task GuncelleAsync(Arac arac);
+    Task<bool> SilAsync(int id);
+    Task RiskSkoruEkleAsync(RiskSkoru riskSkoru);
     Task KaydetAsync();
 }

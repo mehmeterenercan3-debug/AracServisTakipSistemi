@@ -20,10 +20,12 @@ public class PersonelRepository : IPersonelRepository
         _context = context;
     }
 
-    public async Task<List<Personel>> TumunuGetirAsync() => await _context.Personeller.ToListAsync();
+    public async Task<List<Personel>> TumunuGetirAsync() =>
+        await _context.Personeller.Include(p => p.Vardiya).Include(p => p.Bolge).ToListAsync();
 
     public async Task<List<Personel>> AktifleriGetirAsync() =>
-        await _context.Personeller.Where(p => p.AktifMi).ToListAsync();
+        await _context.Personeller.Include(p => p.Vardiya).Include(p => p.Bolge)
+            .Where(p => p.AktifMi).ToListAsync();
 
     public async Task<Personel?> IdIleGetirAsync(int id) => await _context.Personeller.FindAsync(id);
 
@@ -33,6 +35,19 @@ public class PersonelRepository : IPersonelRepository
     {
         _context.Personeller.Update(personel);
         return Task.CompletedTask;
+    }
+
+    public async Task<bool> SilAsync(int id)
+    {
+        var personel = await _context.Personeller.FindAsync(id);
+        if (personel == null) return false;
+
+        var rotaDuraginda = await _context.RotaDuraklari.AnyAsync(rd => rd.PersonelId == id);
+        var soforOlarakAtanmis = await _context.Araclar.AnyAsync(a => a.SoforPersonelId == id);
+        if (rotaDuraginda || soforOlarakAtanmis) return false;
+
+        _context.Personeller.Remove(personel);
+        return true;
     }
 
     public async Task KaydetAsync() => await _context.SaveChangesAsync();

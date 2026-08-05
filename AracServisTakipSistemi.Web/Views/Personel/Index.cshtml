@@ -1,0 +1,365 @@
+@model List<AracServisTakipSistemi.Entities.Entities.Personel>
+@using AracServisTakipSistemi.Entities.Enums
+@{
+    ViewData["Title"] = "Personel";
+    var vardiyalar = ViewBag.Vardiyalar as List<AracServisTakipSistemi.Entities.Entities.Vardiya>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Personel</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Personel</button>
+</div>
+
+@if (TempData["Basari"] != null)
+{
+    <div class="alert alert-success">@TempData["Basari"]</div>
+}
+@if (TempData["Hata"] != null)
+{
+    <div class="alert alert-danger">@TempData["Hata"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Sicil No</th>
+            <th>Ad Soyad</th>
+            <th>Tür</th>
+            <th>Vardiya</th>
+            <th>Bölge</th>
+            <th>Durum</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var personel in Model)
+        {
+            <tr>
+                <td>@personel.SicilNo</td>
+                <td>@personel.Ad @personel.Soyad</td>
+                <td>@(personel.PersonelTuru == PersonelTuru.Sofor ? "Şoför" : "Çalışan")</td>
+                <td>@(personel.Vardiya?.VardiyaAdi ?? "-")</td>
+                <td>
+                    @if (personel.Bolge != null)
+                    {
+                        @personel.Bolge.BolgeAdi
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Atanmadı</span>
+                    }
+                </td>
+                <td>
+                    @if (personel.AktifMi)
+                    {
+                        <span class="badge bg-success">Aktif</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">İşten Ayrıldı</span>
+                    }
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#duzenleModal"
+                            data-id="@personel.Id"
+                            data-ad="@personel.Ad"
+                            data-soyad="@personel.Soyad"
+                            data-sicilno="@personel.SicilNo"
+                            data-tur="@((int)personel.PersonelTuru)"
+                            data-cinsiyet="@personel.Cinsiyet"
+                            data-dogumtarihi="@personel.DogumTarihi?.ToString("yyyy-MM-dd")"
+                            data-telefon="@personel.Telefon"
+                            data-eposta="@personel.Eposta"
+                            data-isegiris="@personel.IseGirisTarihi.ToString("yyyy-MM-dd")"
+                            data-vardiyaid="@personel.VardiyaId">
+                        Düzenle
+                    </button>
+                    @if (personel.AktifMi)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-isten-cikar" data-kid="@personel.Id">İşten Çıkar</button>
+                    }
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#silModal"
+                            data-kid="@personel.Id" data-ad="@personel.Ad @personel.Soyad">
+                        Sil
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz personel eklenmemiş.</p>
+}
+
+<!-- Ekle Modal -->
+<div class="modal fade" id="ekleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Personel Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text-muted">Kişisel Bilgiler</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Ad</label>
+                            <input class="form-control" type="text" name="Ad" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Soyad</label>
+                            <input class="form-control" type="text" name="Soyad" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Sicil No</label>
+                            <input class="form-control" type="text" name="SicilNo" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Personel Türü</label>
+                            <select class="form-select" name="PersonelTuru">
+                                <option value="0">Çalışan</option>
+                                <option value="1">Şoför</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Cinsiyet</label>
+                            <select class="form-select" name="Cinsiyet">
+                                <option value="Kadın">Kadın</option>
+                                <option value="Erkek">Erkek</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Doğum Tarihi</label>
+                            <input class="form-control" type="date" name="DogumTarihi" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Telefon</label>
+                            <input class="form-control" type="text" name="Telefon" />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">E-posta</label>
+                            <input class="form-control" type="email" name="Eposta" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">İşe Giriş Tarihi</label>
+                            <input class="form-control" type="date" name="IseGirisTarihi" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Vardiya</label>
+                            <select class="form-select" name="VardiyaId">
+                                <option value="">-- Vardiya seçin --</option>
+                                @if (vardiyalar != null)
+                                {
+                                    @foreach (var vardiya in vardiyalar)
+                                    {
+                                        <option value="@vardiya.Id">@vardiya.VardiyaAdi</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <h6 class="text-muted">İkametgah Adresi <small>(bölge ataması bu bilgiye göre otomatik yapılır)</small></h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Şehir</label>
+                            <input class="form-control" type="text" name="Sehir" placeholder="örn. İstanbul" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">İlçe</label>
+                            <input class="form-control" type="text" name="IlceAdi" placeholder="örn. Başakşehir" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Semt</label>
+                            <input class="form-control" type="text" name="Semt" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Mahalle</label>
+                            <input class="form-control" type="text" name="Mahalle" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Sokak</label>
+                            <input class="form-control" type="text" name="Sokak" />
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Apartman No</label>
+                            <input class="form-control" type="text" name="ApartmanNo" />
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Dış Kapı No</label>
+                            <input class="form-control" type="text" name="DisKapiNo" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Düzenle Modal (adres burada yok, sadece kişisel bilgiler) -->
+<div class="modal fade" id="duzenleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Edit" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Personel Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-Id" name="Id" />
+
+                    <label class="form-label">Ad</label>
+                    <input class="form-control" type="text" id="edit-Ad" name="Ad" /><br />
+
+                    <label class="form-label">Soyad</label>
+                    <input class="form-control" type="text" id="edit-Soyad" name="Soyad" /><br />
+
+                    <label class="form-label">Sicil No</label>
+                    <input class="form-control" type="text" id="edit-SicilNo" name="SicilNo" /><br />
+
+                    <label class="form-label">Personel Türü</label>
+                    <select class="form-select" id="edit-PersonelTuru" name="PersonelTuru">
+                        <option value="0">Çalışan</option>
+                        <option value="1">Şoför</option>
+                    </select><br />
+
+                    <label class="form-label">Cinsiyet</label>
+                    <select class="form-select" id="edit-Cinsiyet" name="Cinsiyet">
+                        <option value="Kadın">Kadın</option>
+                        <option value="Erkek">Erkek</option>
+                    </select><br />
+
+                    <label class="form-label">Doğum Tarihi</label>
+                    <input class="form-control" type="date" id="edit-DogumTarihi" name="DogumTarihi" /><br />
+
+                    <label class="form-label">Telefon</label>
+                    <input class="form-control" type="text" id="edit-Telefon" name="Telefon" /><br />
+
+                    <label class="form-label">E-posta</label>
+                    <input class="form-control" type="email" id="edit-Eposta" name="Eposta" /><br />
+
+                    <label class="form-label">İşe Giriş Tarihi</label>
+                    <input class="form-control" type="date" id="edit-IseGirisTarihi" name="IseGirisTarihi" /><br />
+
+                    <label class="form-label">Vardiya</label>
+                    <select class="form-select" id="edit-VardiyaId" name="VardiyaId">
+                        <option value="">-- Vardiya seçin --</option>
+                        @if (vardiyalar != null)
+                        {
+                            @foreach (var vardiya in vardiyalar)
+                            {
+                                <option value="@vardiya.Id">@vardiya.VardiyaAdi</option>
+                            }
+                        }
+                    </select>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        Adres/konum düzenleme henüz bu ekranda yok, ayrı bir adımda eklenecek.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Sil Onay Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Personeli Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="sil-mesaj"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="silOnaylaBtn">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-bs-target="#duzenleModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.getElementById('edit-Id').value = btn.getAttribute('data-id');
+                document.getElementById('edit-Ad').value = btn.getAttribute('data-ad');
+                document.getElementById('edit-Soyad').value = btn.getAttribute('data-soyad');
+                document.getElementById('edit-SicilNo').value = btn.getAttribute('data-sicilno');
+                document.getElementById('edit-PersonelTuru').value = btn.getAttribute('data-tur');
+                document.getElementById('edit-Cinsiyet').value = btn.getAttribute('data-cinsiyet');
+                document.getElementById('edit-DogumTarihi').value = btn.getAttribute('data-dogumtarihi') || '';
+                document.getElementById('edit-Telefon').value = btn.getAttribute('data-telefon') || '';
+                document.getElementById('edit-Eposta').value = btn.getAttribute('data-eposta') || '';
+                document.getElementById('edit-IseGirisTarihi').value = btn.getAttribute('data-isegiris');
+                document.getElementById('edit-VardiyaId').value = btn.getAttribute('data-vardiyaid') || '';
+            });
+        });
+
+        document.querySelectorAll('.btn-isten-cikar').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!confirm('Bu personeli işten çıkarmak istediğinize emin misiniz?')) return;
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Personel/IstenCikar',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (sonuc === "başarılı") {
+                            location.reload();
+                        } else {
+                            alert("Bir hata oluştu, tekrar deneyin.");
+                        }
+                    }
+                });
+            });
+        });
+
+        var silinecekId = null;
+        document.querySelectorAll('[data-bs-target="#silModal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                silinecekId = btn.getAttribute('data-kid');
+                var ad = btn.getAttribute('data-ad');
+                document.getElementById('sil-mesaj').innerText =
+                    "'" + ad + "' kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
+            });
+        });
+
+        document.getElementById('silOnaylaBtn').addEventListener('click', function () {
+            if (!silinecekId) return;
+
+            $.ajax({
+                url: '/Personel/Sil',
+                type: 'POST',
+                data: { id: silinecekId },
+                success: function (sonuc) {
+                    if (sonuc === "başarılı") {
+                        location.reload();
+                    } else {
+                        alert("Bu personel bir rotada veya şoför olarak atanmış olduğu için silinemedi. Önce 'İşten Çıkar' kullanın.");
+                    }
+                },
+                error: function () {
+                    alert("Bir hata oluştu, tekrar deneyin.");
+                }
+            });
+        });
+    </script>
+}
