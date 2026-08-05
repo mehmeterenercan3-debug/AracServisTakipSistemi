@@ -1,65 +1,121 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AracServisTakipSistemi.Web</title>
+    <title>@ViewData["Title"] - Araç Servis Takip Sistemi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AracServisTakipSistemi.Web.styles.css" asp-append-version="true" />
+    <style>
+        body { background-color: #f4f6f9; }
+        .app-sidebar {
+            min-height: 100vh;
+            background-color: #1e2a3a;
+            width: 230px;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            padding-top: 1rem;
+            z-index: 100;
+        }
+        .app-sidebar .brand {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.05rem;
+            padding: 0.5rem 1.25rem 1.25rem;
+            display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 0.5rem;
+        }
+        .app-sidebar .nav-link {
+            color: rgba(255,255,255,0.75);
+            padding: 0.6rem 1.25rem;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .app-sidebar .nav-link:hover { color: #fff; background-color: rgba(255,255,255,0.06); }
+        .app-sidebar .nav-link.active { color: #fff; background-color: #2f6fed; border-radius: 6px; margin: 0 0.5rem; padding-left: 0.75rem; width: calc(100% - 1rem); }
+        .app-content { margin-left: 230px; }
+        .app-topbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.7rem 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+        }
+        .app-main { padding: 1.75rem; }
+        @@media (max-width: 768px) {
+            .app-sidebar { display: none; }
+            .app-content { margin-left: 0; }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AracServisTakipSistemi.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item d-flex align-items-center me-2">
-                                <span class="text-dark">@User.Identity.Name</span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Hesap" asp-action="Cikis" method="post">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Çıkış Yap</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Hesap" asp-action="Giris">Giriş Yap</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
+    @{
+        bool girisliVeAdmin = User.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
+    }
+
+    @if (girisliVeAdmin)
+    {
+        <nav class="app-sidebar">
+            <a class="brand" asp-controller="Admin" asp-action="Index">
+                <i class="bi bi-truck"></i> Araç Servis Takip
+            </a>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">
+                        <i class="bi bi-speedometer2"></i> Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Personel" ? "active" : "")" asp-controller="Personel" asp-action="Index">
+                        <i class="bi bi-people"></i> Personel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Arac" ? "active" : "")" asp-controller="Arac" asp-action="Index">
+                        <i class="bi bi-truck-front"></i> Araçlar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Bolge" ? "active" : "")" asp-controller="Bolge" asp-action="Index">
+                        <i class="bi bi-geo-alt"></i> Bölgeler
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vardiya" ? "active" : "")" asp-controller="Vardiya" asp-action="Index">
+                        <i class="bi bi-clock"></i> Vardiyalar
+                    </a>
+                </li>
+            </ul>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    }
+
+    <div class="@(girisliVeAdmin ? "app-content" : "")">
+        <div class="app-topbar">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="text-muted"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
+                <form asp-controller="Hesap" asp-action="Cikis" method="post" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış Yap</button>
+                </form>
+            }
+            else
+            {
+                <a class="btn btn-sm btn-primary" asp-controller="Hesap" asp-action="Giris">Giriş Yap</a>
+            }
+        </div>
+
+        <main class="app-main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - AracServisTakipSistemi.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

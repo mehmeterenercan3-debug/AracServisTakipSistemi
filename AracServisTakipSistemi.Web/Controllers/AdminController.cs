@@ -23,14 +23,14 @@ public class AdminController : Controller
     public async Task<IActionResult> Index()
     {
         var personeller = await _personelServisi.AktifPersonelleriGetirAsync();
-        var araclar = await _aracServisi.AktifAraclariGetirAsync();
+        var araclar = await _aracServisi.TumAraclariGetirAsync();
         var bolgeler = await _bolgeServisi.AktifBolgeleriGetirAsync();
 
         var model = new AdminDashboardViewModel
         {
             ToplamAktifPersonel = personeller.Count,
             BeklemedeKalanPersonel = personeller.Count(p => p.ServisDurumu == ServisDurumu.Beklemede),
-            ToplamAktifArac = araclar.Count,
+            ToplamAktifArac = araclar.Count(a => a.AktifMi),
             BakimdakiAracSayisi = araclar.Count(a => a.BakimdaMi),
             ToplamBolge = bolgeler.Count
         };
