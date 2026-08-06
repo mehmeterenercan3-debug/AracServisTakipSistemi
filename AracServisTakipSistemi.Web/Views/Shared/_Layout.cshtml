@@ -72,8 +72,70 @@
             gap: 1rem;
         }
 
+        /* Şoför/Personel gibi kenar çubuğu olmayan roller için markalı, koyu üst bar */
+        .app-topbar-branded {
+            background: #1e2a3a;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            color: #fff;
+        }
+
+            .app-topbar-branded .brand {
+                color: #fff;
+                font-weight: 600;
+                font-size: 1.05rem;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .app-topbar-branded .text-muted {
+                color: rgba(255,255,255,0.75) !important;
+            }
+
         .app-main {
             padding: 1.75rem;
+        }
+
+        /* Genel görsel cila — kart ve tablo alanları için */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .table {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            .table thead th {
+                background-color: #f1f3f6;
+                border-bottom: 2px solid #e5e7eb;
+                font-weight: 600;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+                color: #4b5563;
+            }
+
+        h2 {
+            font-weight: 600;
+            color: #1e2a3a;
+        }
+
+        .btn {
+            border-radius: 6px;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.7em;
         }
 
         @@media (max-width: 768px) {
@@ -90,6 +152,7 @@
 <body>
     @{
         bool girisliVeAdmin = User.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
+        bool girisliVeDiger = User.Identity?.IsAuthenticated == true && !girisliVeAdmin;
     }
     @if (girisliVeAdmin)
     {
@@ -137,26 +200,112 @@
         </nav>
     }
     <div class="@(girisliVeAdmin ? "app-content" : "")">
-        <div class="app-topbar">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <span class="text-muted"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
-                <form asp-controller="Hesap" asp-action="Cikis" method="post" class="m-0">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış Yap</button>
-                </form>
-            }
-            else
-            {
-                <a class="btn btn-sm btn-primary" asp-controller="Hesap" asp-action="Giris">Giriş Yap</a>
-            }
-        </div>
+        @if (girisliVeDiger)
+        {
+            <div class="app-topbar-branded">
+                <a class="brand" asp-controller="Servisim" asp-action="Index">
+                    <i class="bi bi-truck"></i> Araç Servis Takip
+                </a>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted"><i class="bi bi-person-circle"></i> @User.Identity!.Name</span>
+                    <form asp-controller="Hesap" asp-action="Cikis" method="post" class="m-0">
+                        <button type="submit" class="btn btn-sm btn-outline-light">Çıkış Yap</button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="app-topbar">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="text-muted"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
+                    <form asp-controller="Hesap" asp-action="Cikis" method="post" class="m-0">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış Yap</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-primary" asp-controller="Hesap" asp-action="Giris">Giriş Yap</a>
+                }
+            </div>
+        }
         <main class="app-main">
             @RenderBody()
         </main>
     </div>
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 1080;"></div>
+
+    <div class="modal fade" id="onayModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-question-circle text-primary"></i> Onay</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="onayModalMesaj"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn btn-primary" id="onayModalOnayla">Onayla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // alert() yerine — şık, kendi tasarımımızla uyumlu bildirim kutusu (sağ üstte çıkar, otomatik kaybolur)
+        function mesajGoster(mesaj, tur) {
+            tur = tur || 'bilgi';
+            var renkler = { basari: 'bg-success text-white', hata: 'bg-danger text-white', bilgi: 'bg-primary text-white' };
+            var sinif = renkler[tur] || renkler.bilgi;
+
+            var toastEl = document.createElement('div');
+            toastEl.className = 'toast align-items-center ' + sinif + ' border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.innerHTML =
+                '<div class="d-flex">' +
+                    '<div class="toast-body" style="white-space: pre-line;">' + mesaj + '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                '</div>';
+
+            document.getElementById('toastContainer').appendChild(toastEl);
+            var toast = new bootstrap.Toast(toastEl, { delay: 7000 });
+            toast.show();
+            toastEl.addEventListener('hidden.bs.toast', function () { toastEl.remove(); });
+        }
+
+        // confirm() yerine — kendi tasarımımızla uyumlu onay modalı, Promise döndürür
+        function onayIste(mesaj) {
+            return new Promise(function (resolve) {
+                document.getElementById('onayModalMesaj').innerText = mesaj;
+                var modalEl = document.getElementById('onayModal');
+                var modal = new bootstrap.Modal(modalEl);
+                var onaylaBtn = document.getElementById('onayModalOnayla');
+
+                function temizle() {
+                    onaylaBtn.removeEventListener('click', onaylaHandler);
+                    modalEl.removeEventListener('hidden.bs.modal', iptalHandler);
+                }
+                function onaylaHandler() {
+                    temizle();
+                    modal.hide();
+                    resolve(true);
+                }
+                function iptalHandler() {
+                    temizle();
+                    resolve(false);
+                }
+
+                onaylaBtn.addEventListener('click', onaylaHandler);
+                modalEl.addEventListener('hidden.bs.modal', iptalHandler);
+                modal.show();
+            });
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

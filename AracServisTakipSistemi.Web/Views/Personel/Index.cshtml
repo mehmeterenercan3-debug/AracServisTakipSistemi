@@ -395,8 +395,10 @@
         });
 
         document.querySelectorAll('.btn-isten-cikar').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Bu personeli işten çıkarmak istediğinize emin misiniz?')) return;
+            btn.addEventListener('click', async function () {
+                var onaylandi = await onayIste('Bu personeli işten çıkarmak istediğinize emin misiniz?');
+                if (!onaylandi) return;
+
                 var id = btn.getAttribute('data-kid');
                 $.ajax({
                     url: '/Personel/IstenCikar',
@@ -404,13 +406,13 @@
                     data: { id: id },
                     success: function (sonuc) {
                         if (sonuc.basarili) {
-                            if (sonuc.uyari) { alert(sonuc.uyari); }
-                            location.reload();
+                            if (sonuc.uyari) { mesajGoster(sonuc.uyari, 'hata'); }
+                            setTimeout(function () { location.reload(); }, sonuc.uyari ? 3500 : 800);
                         } else {
-                            alert("Bir hata oluştu, tekrar deneyin.");
+                            mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata');
                         }
                     },
-                    error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+                    error: function () { mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata'); }
                 });
             });
         });
@@ -424,20 +426,22 @@
                     data: { id: id },
                     success: function (sonuc) {
                         if (sonuc.basarili) {
-                            alert('Hesap oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nŞifre: ' + sonuc.sifre + '\nRol: ' + sonuc.rol + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.');
-                            location.reload();
+                            mesajGoster('Hesap oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nŞifre: ' + sonuc.sifre + '\nRol: ' + sonuc.rol + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.', 'basari');
+                            setTimeout(function () { location.reload(); }, 3500);
                         } else {
-                            alert(sonuc.mesaj);
+                            mesajGoster(sonuc.mesaj, 'hata');
                         }
                     },
-                    error: function () { alert('Bir hata oluştu, tekrar deneyin.'); }
+                    error: function () { mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata'); }
                 });
             });
         });
 
         document.querySelectorAll('.btn-sifre-sifirla').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Bu personelin şifresini sıfırlamak istediğinize emin misiniz? Eski şifre geçersiz olacak.')) return;
+            btn.addEventListener('click', async function () {
+                var onaylandi = await onayIste('Bu personelin şifresini sıfırlamak istediğinize emin misiniz? Eski şifre geçersiz olacak.');
+                if (!onaylandi) return;
+
                 var id = btn.getAttribute('data-kid');
                 $.ajax({
                     url: '/Personel/SifreSifirla',
@@ -445,12 +449,12 @@
                     data: { id: id },
                     success: function (sonuc) {
                         if (sonuc.basarili) {
-                            alert('Yeni şifre oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nYeni Şifre: ' + sonuc.sifre + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.');
+                            mesajGoster('Yeni şifre oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nYeni Şifre: ' + sonuc.sifre + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.', 'basari');
                         } else {
-                            alert(sonuc.mesaj);
+                            mesajGoster(sonuc.mesaj, 'hata');
                         }
                     },
-                    error: function () { alert('Bir hata oluştu, tekrar deneyin.'); }
+                    error: function () { mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata'); }
                 });
             });
         });
@@ -474,24 +478,25 @@
                 data: { id: silinecekId },
                 success: function (sonuc) {
                     if (sonuc === "başarılı") { location.reload(); }
-                    else { alert("Bu personel bir rotada veya şoför olarak atanmış olduğu için silinemedi. Önce 'İşten Çıkar' kullanın."); }
+                    else { mesajGoster("Bu personel bir rotada veya şoför olarak atanmış olduğu için silinemedi. Önce 'İşten Çıkar' kullanın.", 'hata'); }
                 },
-                error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+                error: function () { mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata'); }
             });
         });
 
-        document.getElementById('btnBolgeleriYenidenHesapla').addEventListener('click', function () {
-            if (!confirm('Tüm aktif personelin bölge ataması, güncel bölge tablosuna göre yeniden hesaplanacak. Devam edilsin mi?')) return;
+        document.getElementById('btnBolgeleriYenidenHesapla').addEventListener('click', async function () {
+            var onaylandi = await onayIste('Tüm aktif personelin bölge ataması, güncel bölge tablosuna göre yeniden hesaplanacak. Devam edilsin mi?');
+            if (!onaylandi) return;
 
             $.ajax({
                 url: '/Personel/BolgeleriYenidenHesapla',
                 type: 'POST',
                 success: function (sonuc) {
-                    alert(sonuc.guncellenen + ' personelin bölgesi güncellendi.');
-                    location.reload();
+                    mesajGoster(sonuc.guncellenen + ' personelin bölgesi güncellendi.', 'basari');
+                    setTimeout(function () { location.reload(); }, 1500);
                 },
                 error: function () {
-                    alert('Bir hata oluştu, tekrar deneyin.');
+                    mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata');
                 }
             });
         });
