@@ -1,9 +1,11 @@
 ﻿using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AracServisTakipSistemi.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class RotaController : Controller
 {
     private readonly RotaServisi _rotaServisi;
