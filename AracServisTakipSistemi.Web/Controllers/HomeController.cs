@@ -1,32 +1,29 @@
-using System.Diagnostics;
 using AracServisTakipSistemi.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AracServisTakipSistemi.Web.Controllers
+namespace AracServisTakipSistemi.Web.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    // Artık "hoş geldiniz" sayfası göstermiyor — girişli kullanıcıyı rolüne göre doğru
+    // panele yönlendiren bir trafik yönlendirici. Girişsiz kullanıcıyı giriş sayfasına atar.
+    public IActionResult Index()
     {
-        private readonly ILogger<HomeController> _logger;
+        if (User.Identity?.IsAuthenticated != true)
+            return RedirectToAction("Giris", "Hesap");
 
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
+        if (User.IsInRole("Admin"))
+            return RedirectToAction("Index", "Admin");
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        if (User.IsInRole("Sofor") || User.IsInRole("Personel"))
+            return RedirectToAction("Index", "Servisim");
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        return RedirectToAction("Giris", "Hesap");
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
     }
 }
