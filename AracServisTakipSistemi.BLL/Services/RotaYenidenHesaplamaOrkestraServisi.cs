@@ -62,6 +62,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
             {
                 AracId = rotaSonucu.AracId,
                 Durum = sonuc.KapasiteYetersiz ? RotaDurumu.OnayBekliyor : RotaDurumu.Onaylandi,
+                Yon = rotaSonucu.Yon,
                 RotaTarihi = DateTime.Today,
                 ToplamMesafeKm = rotaSonucu.ToplamMesafeKm,
                 TahminiSureDk = rotaSonucu.TahminiToplamSureDk,
@@ -77,7 +78,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
                 {
                     PersonelId = rotaSonucu.ZiyaretSirasi[i].Id,
                     SiraNo = i + 1,
-                    TahminiVarisSaati = rotaSonucu.GidisKalkisSaati
+                    TahminiVarisSaati = rotaSonucu.VarisSaatleri[i]
                 });
             }
 

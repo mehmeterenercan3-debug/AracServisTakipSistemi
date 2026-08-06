@@ -28,6 +28,7 @@
         <tr>
             <th>#ID</th>
             <th>Araç Plaka</th>
+            <th>Yön</th>
             <th>Mesafe (Km)</th>
             <th>Süre (Dk)</th>
             <th>Durum</th>
@@ -40,6 +41,16 @@
             <tr id="rota-row-@rota.Id">
                 <td>#@rota.Id</td>
                 <td>@rota.AracPlaka</td>
+                <td>
+                    @if (rota.Yon == "Gidis")
+                    {
+                        <span class="badge bg-primary">Gidiş (Sabah)</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-dark">Dönüş (Akşam)</span>
+                    }
+                </td>
                 <td>@rota.ToplamMesafeKm km</td>
                 <td>@rota.TahminiSureDk dk</td>
                 <td id="durum-badge-@rota.Id">

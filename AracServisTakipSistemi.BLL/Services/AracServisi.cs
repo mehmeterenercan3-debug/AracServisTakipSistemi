@@ -24,6 +24,13 @@ public class AracServisi
 
     public Task<Arac?> AracGetirAsync(int id) => _repository.IdIleGetirAsync(id);
 
+    // Şoför paneli için — bu personelin şoförü olduğu aracı bul
+    public async Task<Arac?> AracSoforIdIleGetirAsync(int personelId)
+    {
+        var araclar = await _repository.AktifleriGetirAsync();
+        return araclar.FirstOrDefault(a => a.SoforPersonelId == personelId);
+    }
+
     public async Task AracEkleAsync(Arac arac)
     {
         await _repository.EkleAsync(arac);

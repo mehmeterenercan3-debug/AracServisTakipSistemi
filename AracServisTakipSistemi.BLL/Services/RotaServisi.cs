@@ -23,6 +23,10 @@ public class RotaServisi
 
     public Task<Rota?> RotaGetirAsync(int id) => _repository.IdIleGetirAsync(id);
 
+    public Task<List<Rota>> AktifRotalarAracIdIleGetirAsync(int aracId) => _repository.AktifRotalarAracIdIleGetirAsync(aracId);
+
+    public Task<List<RotaDuragi>> AktifDuraklarPersonelIdIleGetirAsync(int personelId) => _repository.AktifDuraklarPersonelIdIleGetirAsync(personelId);
+
     public async Task OnaylaAsync(int id)
     {
         var rota = await _repository.IdIleGetirAsync(id);

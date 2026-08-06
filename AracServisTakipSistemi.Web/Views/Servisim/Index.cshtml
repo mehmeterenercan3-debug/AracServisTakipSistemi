@@ -1,0 +1,81 @@
+@model AracServisTakipSistemi.Web.Models.ServisimViewModel
+@{
+    ViewData["Title"] = "Servisim";
+}
+
+<h2>Servisim</h2>
+
+@if (!Model.KayitBulunduMu)
+{
+    <div class="alert alert-warning mt-3">@Model.BilgiMesaji</div>
+}
+else
+{
+    <p class="text-muted">Araç: <strong>@Model.AracPlaka</strong>@(Model.Rol == "Personel" ? $" — Şoför: {Model.SoforAdSoyad}" : "")</p>
+
+    <div class="row mt-3">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">Gidiş (Sabah)</div>
+                <div class="card-body">
+                    @if (Model.Gidis == null)
+                    {
+                        <p class="text-muted mb-0">Gidiş rotası hesaplanmamış.</p>
+                    }
+                    else if (Model.Rol == "Sofor")
+                    {
+                        <p class="mb-1"><strong>Durum:</strong> @(Model.Gidis.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
+                        <p class="mb-3"><strong>Toplam:</strong> @Model.Gidis.ToplamMesafeKm km / @Model.Gidis.TahminiSureDk dk</p>
+                        <table class="table table-sm table-striped">
+                            <thead><tr><th>Sıra</th><th>Personel</th><th>Varış</th></tr></thead>
+                            <tbody>
+                                @foreach (var durak in Model.Gidis.TumDuraklar)
+                                {
+                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.VarisSaati</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="mb-1"><strong>Sıra Numaram:</strong> @Model.Gidis.KendiSiraNo</p>
+                        <p class="mb-1"><strong>Alınış Saatim:</strong> @Model.Gidis.KendiVarisSaati</p>
+                        <p class="mb-0"><strong>Durum:</strong> @(Model.Gidis.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white">Dönüş (Akşam)</div>
+                <div class="card-body">
+                    @if (Model.Donus == null)
+                    {
+                        <p class="text-muted mb-0">Dönüş rotası hesaplanmamış.</p>
+                    }
+                    else if (Model.Rol == "Sofor")
+                    {
+                        <p class="mb-1"><strong>Durum:</strong> @(Model.Donus.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
+                        <p class="mb-3"><strong>Toplam:</strong> @Model.Donus.ToplamMesafeKm km / @Model.Donus.TahminiSureDk dk</p>
+                        <table class="table table-sm table-striped">
+                            <thead><tr><th>Sıra</th><th>Personel</th><th>Bırakış</th></tr></thead>
+                            <tbody>
+                                @foreach (var durak in Model.Donus.TumDuraklar)
+                                {
+                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.VarisSaati</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="mb-1"><strong>Sıra Numaram:</strong> @Model.Donus.KendiSiraNo</p>
+                        <p class="mb-1"><strong>Bırakılış Saatim:</strong> @Model.Donus.KendiVarisSaati</p>
+                        <p class="mb-0"><strong>Durum:</strong> @(Model.Donus.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

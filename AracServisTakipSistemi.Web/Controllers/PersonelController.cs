@@ -1,7 +1,9 @@
 using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.Entities.Entities;
+using AracServisTakipSistemi.Entities.Enums;
 using AracServisTakipSistemi.Web.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AracServisTakipSistemi.Web.Controllers;
@@ -11,11 +13,13 @@ public class PersonelController : Controller
 {
     private readonly PersonelServisi _personelServisi;
     private readonly VardiyaServisi _vardiyaServisi;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public PersonelController(PersonelServisi personelServisi, VardiyaServisi vardiyaServisi)
+    public PersonelController(PersonelServisi personelServisi, VardiyaServisi vardiyaServisi, UserManager<ApplicationUser> userManager)
     {
         _personelServisi = personelServisi;
         _vardiyaServisi = vardiyaServisi;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
@@ -28,6 +32,13 @@ public class PersonelController : Controller
         foreach (var p in personeller)
             adresSozlugu[p.Id] = await _personelServisi.AktifAdresiGetirAsync(p.Id);
         ViewBag.Adresler = adresSozlugu;
+
+        // Hangi personelin zaten bir kullanıcı hesabı var, "Hesap Oluştur" butonunu ona göre gösteriyoruz
+        var hesapliPersonelIdleri = _userManager.Users
+            .Where(u => u.PersonelId != null)
+            .Select(u => u.PersonelId!.Value)
+            .ToHashSet();
+        ViewBag.HesapVarMi = hesapliPersonelIdleri;
 
         return View(personeller);
     }
@@ -148,5 +159,46 @@ public class PersonelController : Controller
     {
         var guncellenenSayisi = await _personelServisi.TumBolgeAtamalariniYenidenHesaplaAsync();
         return Json(new { basarili = true, guncellenen = guncellenenSayisi });
+    }
+
+    // Personele giriş yapabileceği bir kullanıcı hesabı oluşturur — kullanıcı adı sicil no,
+    // varsayılan şifre üretilir, personel türüne göre Şoför/Personel rolü verilir.
+    [HttpPost]
+    public async Task<IActionResult> KullaniciOlustur(int id)
+    {
+        var personel = await _personelServisi.PersonelGetirAsync(id);
+        if (personel == null)
+            return Json(new { basarili = false, mesaj = "Personel bulunamadı." });
+
+        var mevcutKullanici = await _userManager.FindByNameAsync(personel.SicilNo);
+        if (mevcutKullanici != null)
+            return Json(new { basarili = false, mesaj = "Bu personel için zaten bir kullanıcı hesabı var." });
+
+        var varsayilanSifre = $"Servis{DateTime.Now.Year}!";
+
+        var yeniKullanici = new ApplicationUser
+        {
+            UserName = personel.SicilNo,
+            Email = $"{personel.SicilNo}@aracservis.local",
+            PersonelId = personel.Id
+        };
+
+        var sonuc = await _userManager.CreateAsync(yeniKullanici, varsayilanSifre);
+        if (!sonuc.Succeeded)
+        {
+            var hatalar = string.Join(", ", sonuc.Errors.Select(e => e.Description));
+            return Json(new { basarili = false, mesaj = $"Hesap oluşturulamadı: {hatalar}" });
+        }
+
+        var rol = personel.PersonelTuru == PersonelTuru.Sofor ? "Sofor" : "Personel";
+        await _userManager.AddToRoleAsync(yeniKullanici, rol);
+
+        return Json(new
+        {
+            basarili = true,
+            kullaniciAdi = personel.SicilNo,
+            sifre = varsayilanSifre,
+            rol
+        });
     }
 }

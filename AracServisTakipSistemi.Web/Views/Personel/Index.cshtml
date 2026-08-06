@@ -5,6 +5,7 @@
     ViewData["Title"] = "Personel";
     var vardiyalar = ViewBag.Vardiyalar as List<Vardiya>;
     var adresler = ViewBag.Adresler as Dictionary<int, PersonelAdres?>;
+    var hesapVarMi = ViewBag.HesapVarMi as HashSet<int>;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -40,6 +41,7 @@
         @foreach (var personel in Model)
         {
             var adres = (adresler != null && adresler.ContainsKey(personel.Id)) ? adresler[personel.Id] : null;
+            var hesabiVar = hesapVarMi != null && hesapVarMi.Contains(personel.Id);
             <tr>
                 <td>@personel.SicilNo</td>
                 <td>@personel.Ad @personel.Soyad</td>
@@ -63,6 +65,10 @@
                     else
                     {
                         <span class="badge bg-secondary">İşten Ayrıldı</span>
+                    }
+                    @if (hesabiVar)
+                    {
+                        <span class="badge bg-info text-dark">Hesabı Var</span>
                     }
                 </td>
                 <td>
@@ -91,6 +97,10 @@
                     @if (personel.AktifMi)
                     {
                         <button type="button" class="btn btn-sm btn-outline-warning btn-isten-cikar" data-kid="@personel.Id">İşten Çıkar</button>
+                    }
+                    @if (!hesabiVar)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-info btn-hesap-olustur" data-kid="@personel.Id">Hesap Oluştur</button>
                     }
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             data-bs-toggle="modal" data-bs-target="#silModal"
@@ -388,6 +398,26 @@
                         if (sonuc === "başarılı") { location.reload(); }
                         else { alert("Bir hata oluştu, tekrar deneyin."); }
                     }
+                });
+            });
+        });
+
+        document.querySelectorAll('.btn-hesap-olustur').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Personel/KullaniciOlustur',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (sonuc.basarili) {
+                            alert('Hesap oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nŞifre: ' + sonuc.sifre + '\nRol: ' + sonuc.rol + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.');
+                            location.reload();
+                        } else {
+                            alert(sonuc.mesaj);
+                        }
+                    },
+                    error: function () { alert('Bir hata oluştu, tekrar deneyin.'); }
                 });
             });
         });

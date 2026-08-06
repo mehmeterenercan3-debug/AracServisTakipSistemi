@@ -6,6 +6,9 @@
     <div class="col-md-6"><strong>Durum:</strong> @Model.Durum</div>
 </div>
 <div class="row mb-2">
+    <div class="col-md-6"><strong>Yön:</strong> @(Model.Yon == "Gidis" ? "Gidiş (Sabah)" : "Dönüş (Akşam)")</div>
+</div>
+<div class="row mb-2">
     <div class="col-md-6"><strong>Araç Plaka:</strong> @Model.AracPlaka</div>
     <div class="col-md-6"><strong>Toplam Mesafe:</strong> @Model.ToplamMesafeKm km</div>
 </div>

@@ -42,8 +42,14 @@ public class HesapController : Controller
         }
 
         var kullanici = await _userManager.FindByNameAsync(model.KullaniciAdi);
-        if (kullanici != null && await _userManager.IsInRoleAsync(kullanici, "Admin"))
-            return RedirectToAction("Index", "Admin");
+        if (kullanici != null)
+        {
+            if (await _userManager.IsInRoleAsync(kullanici, "Admin"))
+                return RedirectToAction("Index", "Admin");
+
+            if (await _userManager.IsInRoleAsync(kullanici, "Sofor") || await _userManager.IsInRoleAsync(kullanici, "Personel"))
+                return RedirectToAction("Index", "Servisim");
+        }
 
         return RedirectToAction("Index", "Home");
     }

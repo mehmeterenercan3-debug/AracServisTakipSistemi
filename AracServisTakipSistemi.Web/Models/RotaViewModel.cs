@@ -6,6 +6,7 @@ public class RotaViewModel
     public int AracId { get; set; }
     public string AracPlaka { get; set; } = string.Empty;
     public string Durum { get; set; } = string.Empty;
+    public string Yon { get; set; } = string.Empty;
     public double ToplamMesafeKm { get; set; }
     public int TahminiSureDk { get; set; }
     public DateTime RotaTarihi { get; set; }

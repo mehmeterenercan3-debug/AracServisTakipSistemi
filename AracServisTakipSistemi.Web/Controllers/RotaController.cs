@@ -1,7 +1,7 @@
 ﻿using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.Web.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AracServisTakipSistemi.Web.Controllers;
 
@@ -20,16 +20,19 @@ public class RotaController : Controller
     public async Task<IActionResult> Index()
     {
         var rotalar = await _rotaServisi.AktifRotalariGetirAsync();
-        var viewModel = rotalar.Select(r => new RotaViewModel
-        {
-            Id = r.Id,
-            AracId = r.AracId,
-            AracPlaka = r.Arac?.Plaka ?? "-",
-            Durum = r.Durum.ToString(),
-            ToplamMesafeKm = r.ToplamMesafeKm,
-            TahminiSureDk = r.TahminiSureDk,
-            RotaTarihi = r.RotaTarihi
-        }).ToList();
+        var viewModel = rotalar
+            .OrderBy(r => r.AracId).ThenBy(r => r.Yon)
+            .Select(r => new RotaViewModel
+            {
+                Id = r.Id,
+                AracId = r.AracId,
+                AracPlaka = r.Arac?.Plaka ?? "-",
+                Durum = r.Durum.ToString(),
+                Yon = r.Yon.ToString(),
+                ToplamMesafeKm = r.ToplamMesafeKm,
+                TahminiSureDk = r.TahminiSureDk,
+                RotaTarihi = r.RotaTarihi
+            }).ToList();
 
         return View(viewModel);
     }
@@ -39,7 +42,7 @@ public class RotaController : Controller
     public async Task<IActionResult> YenidenHesapla()
     {
         await _orkestraServisi.YenidenHesaplaVeUygulaAsync();
-        TempData["Basari"] = "Rotalar başarıyla yeniden hesaplandı.";
+        TempData["Basari"] = "Rotalar (gidiş + dönüş) başarıyla yeniden hesaplandı.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -62,6 +65,7 @@ public class RotaController : Controller
             AracId = rota.AracId,
             AracPlaka = rota.Arac?.Plaka ?? "-",
             Durum = rota.Durum.ToString(),
+            Yon = rota.Yon.ToString(),
             ToplamMesafeKm = rota.ToplamMesafeKm,
             TahminiSureDk = rota.TahminiSureDk,
             RotaTarihi = rota.RotaTarihi,

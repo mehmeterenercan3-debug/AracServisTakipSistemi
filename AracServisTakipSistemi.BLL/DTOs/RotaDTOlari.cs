@@ -1,4 +1,5 @@
 ﻿using AracServisTakipSistemi.Entities.Entities;
+using AracServisTakipSistemi.Entities.Enums;
 
 namespace AracServisTakipSistemi.BLL.DTOs;
 
@@ -8,13 +9,17 @@ public class RotaSonucu
     public string Plaka { get; set; } = string.Empty;
     public int VardiyaId { get; set; }
     public string VardiyaAdi { get; set; } = string.Empty;
+    public RotaYonu Yon { get; set; } = RotaYonu.Gidis;
     public List<int> BolgeIdleri { get; set; } = new();
     public List<Personel> ZiyaretSirasi { get; set; } = new();
+
+    // ZiyaretSirasi ile aynı sırada, her durağın tahmini varış saati
+    public List<TimeSpan> VarisSaatleri { get; set; } = new();
+
     public int ToplamPersonelSayisi => ZiyaretSirasi.Count;
     public double ToplamMesafeKm { get; set; }
     public int TahminiToplamSureDk { get; set; }
-    public TimeSpan GidisKalkisSaati { get; set; }
-    public TimeSpan DonusKalkisSaati { get; set; }
+    public TimeSpan KalkisSaati { get; set; }
 }
 
 public class RotaHesaplamaSonucu

@@ -22,17 +22,30 @@ public class RotaRepository : IRotaRepository
 
     public async Task<Rota?> IdIleGetirAsync(int id) =>
         await _context.Rotalar
-            .Include(r => r.Arac)
+            .Include(r => r.Arac).ThenInclude(a => a!.SoforPersonel)
             .Include(r => r.Bolgeler).ThenInclude(rb => rb.Bolge)
             .Include(r => r.Duraklar).ThenInclude(d => d.Personel)
             .FirstOrDefaultAsync(r => r.Id == id);
 
     public async Task<List<Rota>> AktifRotalariGetirAsync() =>
         await _context.Rotalar
-            .Include(r => r.Arac)
+            .Include(r => r.Arac).ThenInclude(a => a!.SoforPersonel)
             .Include(r => r.Bolgeler).ThenInclude(rb => rb.Bolge)
             .Include(r => r.Duraklar).ThenInclude(d => d.Personel)
             .Where(r => r.AktifMi)
+            .ToListAsync();
+
+    public async Task<List<Rota>> AktifRotalarAracIdIleGetirAsync(int aracId) =>
+        await _context.Rotalar
+            .Include(r => r.Arac).ThenInclude(a => a!.SoforPersonel)
+            .Include(r => r.Duraklar.OrderBy(d => d.SiraNo)).ThenInclude(d => d.Personel)
+            .Where(r => r.AracId == aracId && r.AktifMi)
+            .ToListAsync();
+
+    public async Task<List<RotaDuragi>> AktifDuraklarPersonelIdIleGetirAsync(int personelId) =>
+        await _context.RotaDuraklari
+            .Include(d => d.Rota).ThenInclude(r => r!.Arac).ThenInclude(a => a!.SoforPersonel)
+            .Where(d => d.PersonelId == personelId && d.Rota!.AktifMi)
             .ToListAsync();
 
     public async Task EkleAsync(Rota rota) => await _context.Rotalar.AddAsync(rota);
