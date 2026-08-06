@@ -1,3 +1,4 @@
+using AracServisTakipSistemi.BLL.Services;
 using AracServisTakipSistemi.Entities.Entities;
 using AracServisTakipSistemi.Web.Models;
 using Microsoft.AspNetCore.Identity;
@@ -9,11 +10,13 @@ public class HesapController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly PersonelServisi _personelServisi;
 
-    public HesapController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+    public HesapController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, PersonelServisi personelServisi)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _personelServisi = personelServisi;
     }
 
     [HttpGet]
@@ -42,14 +45,31 @@ public class HesapController : Controller
         }
 
         var kullanici = await _userManager.FindByNameAsync(model.KullaniciAdi);
-        if (kullanici != null)
+        if (kullanici == null)
         {
-            if (await _userManager.IsInRoleAsync(kullanici, "Admin"))
-                return RedirectToAction("Index", "Admin");
-
-            if (await _userManager.IsInRoleAsync(kullanici, "Sofor") || await _userManager.IsInRoleAsync(kullanici, "Personel"))
-                return RedirectToAction("Index", "Servisim");
+            await _signInManager.SignOutAsync();
+            ModelState.AddModelError(string.Empty, "Kullanıcı bulunamadı.");
+            return View(model);
         }
+
+        // Kullanıcı bir Personel kaydına bağlıysa (Şoför/Personel), o personelin hâlâ
+        // aktif (işten ayrılmamış) olduğunu doğrula — Identity'nin kendi hesabı bunu bilmiyor.
+        if (kullanici.PersonelId != null)
+        {
+            var personel = await _personelServisi.PersonelGetirAsync(kullanici.PersonelId.Value);
+            if (personel == null || !personel.AktifMi)
+            {
+                await _signInManager.SignOutAsync();
+                ModelState.AddModelError(string.Empty, "Bu hesap artık aktif değil. Lütfen yöneticinizle iletişime geçin.");
+                return View(model);
+            }
+        }
+
+        if (await _userManager.IsInRoleAsync(kullanici, "Admin"))
+            return RedirectToAction("Index", "Admin");
+
+        if (await _userManager.IsInRoleAsync(kullanici, "Sofor") || await _userManager.IsInRoleAsync(kullanici, "Personel"))
+            return RedirectToAction("Index", "Servisim");
 
         return RedirectToAction("Index", "Home");
     }

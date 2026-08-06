@@ -3,7 +3,10 @@
     ViewData["Title"] = "Servisim";
 }
 
-<h2>Servisim</h2>
+<div class="d-flex justify-content-between align-items-center">
+    <h2>Servisim</h2>
+    <a asp-controller="Servisim" asp-action="SifreDegistir" class="btn btn-sm btn-outline-secondary">Şifremi Değiştir</a>
+</div>
 
 @if (!Model.KayitBulunduMu)
 {

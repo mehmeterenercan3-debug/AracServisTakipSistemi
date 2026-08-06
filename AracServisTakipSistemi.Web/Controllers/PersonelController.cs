@@ -14,12 +14,16 @@ public class PersonelController : Controller
     private readonly PersonelServisi _personelServisi;
     private readonly VardiyaServisi _vardiyaServisi;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RotaYenidenHesaplamaOrkestraServisi _rotaOrkestraServisi;
+    private readonly AracServisi _aracServisi;
 
-    public PersonelController(PersonelServisi personelServisi, VardiyaServisi vardiyaServisi, UserManager<ApplicationUser> userManager)
+    public PersonelController(PersonelServisi personelServisi, VardiyaServisi vardiyaServisi, UserManager<ApplicationUser> userManager, RotaYenidenHesaplamaOrkestraServisi rotaOrkestraServisi, AracServisi aracServisi)
     {
         _personelServisi = personelServisi;
         _vardiyaServisi = vardiyaServisi;
         _userManager = userManager;
+        _rotaOrkestraServisi = rotaOrkestraServisi;
+        _aracServisi = aracServisi;
     }
 
     public async Task<IActionResult> Index()
@@ -27,13 +31,11 @@ public class PersonelController : Controller
         var personeller = await _personelServisi.TumPersonelleriGetirAsync();
         ViewBag.Vardiyalar = await _vardiyaServisi.AktifVardiyalariGetirAsync();
 
-        // Düzenle modal'ını dolduracağımız için her personelin aktif adresini de topluyoruz
         var adresSozlugu = new Dictionary<int, PersonelAdres?>();
         foreach (var p in personeller)
             adresSozlugu[p.Id] = await _personelServisi.AktifAdresiGetirAsync(p.Id);
         ViewBag.Adresler = adresSozlugu;
 
-        // Hangi personelin zaten bir kullanıcı hesabı var, "Hesap Oluştur" butonunu ona göre gösteriyoruz
         var hesapliPersonelIdleri = _userManager.Users
             .Where(u => u.PersonelId != null)
             .Select(u => u.PersonelId!.Value)
@@ -107,6 +109,12 @@ public class PersonelController : Controller
         var personel = await _personelServisi.PersonelGetirAsync(model.Id);
         if (personel == null) return NotFound();
 
+        if (!personel.AktifMi)
+        {
+            TempData["Hata"] = "İşten ayrılmış personelin bilgileri düzenlenemez.";
+            return RedirectToAction(nameof(Index));
+        }
+
         personel.Ad = model.Ad;
         personel.Soyad = model.Soyad;
         personel.SicilNo = model.SicilNo;
@@ -140,11 +148,39 @@ public class PersonelController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // Personel işten çıkınca kapasite hiçbir zaman artmaz (sadece azalır) — bu yüzden
+    // güvenle, sessizce ve her zaman otomatik yeniden hesaplayabiliriz.
+    // Şoförse: bağlı olduğu araç "şoförsüz" kalır — yoksa rota hesaplaması işten ayrılmış
+    // kişinin evini başlangıç noktası olarak kullanmaya devam eder.
+    // Giriş hesabı varsa tamamen silinir — artık giriş yapamaz, "Hesap Silindi" gösterilir.
     [HttpPost]
     public async Task<IActionResult> IstenCikar(int id)
     {
+        var personel = await _personelServisi.PersonelGetirAsync(id);
         await _personelServisi.IstenCikarAsync(id);
-        return Json("başarılı");
+
+        string? uyari = null;
+
+        if (personel != null && personel.PersonelTuru == PersonelTuru.Sofor)
+        {
+            var arac = await _aracServisi.AracSoforIdIleGetirAsync(id);
+            if (arac != null)
+            {
+                arac.SoforPersonelId = null;
+                await _aracServisi.AracGuncelleAsync(arac);
+                uyari = $"'{arac.Plaka}' plakalı araç şoförsüz kaldı — Araçlar ekranından yeni bir şoför atayın, sonra rotaları tekrar hesaplayın.";
+            }
+        }
+
+        var kullanici = _userManager.Users.FirstOrDefault(u => u.PersonelId == id);
+        if (kullanici != null)
+        {
+            await _userManager.DeleteAsync(kullanici);
+        }
+
+        await _rotaOrkestraServisi.YenidenHesaplaVeUygulaAsync();
+
+        return Json(new { basarili = true, uyari });
     }
 
     [HttpPost]
@@ -200,5 +236,28 @@ public class PersonelController : Controller
             sifre = varsayilanSifre,
             rol
         });
+    }
+
+    // Şifreyi "görmüyoruz" (hiçbir sistemde görülemez, hash'lenmiş halde tutulur) —
+    // bunun yerine admin istediği zaman yeni bir şifre üretip atayabiliyor.
+    [HttpPost]
+    public async Task<IActionResult> SifreSifirla(int id)
+    {
+        var kullanici = _userManager.Users.FirstOrDefault(u => u.PersonelId == id);
+        if (kullanici == null)
+            return Json(new { basarili = false, mesaj = "Bu personelin bir hesabı yok." });
+
+        var yeniSifre = $"Servis{DateTime.Now.Year}{new Random().Next(10, 99)}!";
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(kullanici);
+        var sonuc = await _userManager.ResetPasswordAsync(kullanici, token, yeniSifre);
+
+        if (!sonuc.Succeeded)
+        {
+            var hatalar = string.Join(", ", sonuc.Errors.Select(e => e.Description));
+            return Json(new { basarili = false, mesaj = $"Şifre sıfırlanamadı: {hatalar}" });
+        }
+
+        return Json(new { basarili = true, kullaniciAdi = kullanici.UserName, sifre = yeniSifre });
     }
 }

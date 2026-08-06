@@ -65,42 +65,50 @@
                     else
                     {
                         <span class="badge bg-secondary">İşten Ayrıldı</span>
+                        <span class="badge bg-dark">Hesap Silindi</span>
                     }
-                    @if (hesabiVar)
+                    @if (personel.AktifMi && hesabiVar)
                     {
                         <span class="badge bg-info text-dark">Hesabı Var</span>
                     }
                 </td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-outline-primary"
-                            data-bs-toggle="modal" data-bs-target="#duzenleModal"
-                            data-id="@personel.Id"
-                            data-ad="@personel.Ad"
-                            data-soyad="@personel.Soyad"
-                            data-sicilno="@personel.SicilNo"
-                            data-tur="@((int)personel.PersonelTuru)"
-                            data-cinsiyet="@personel.Cinsiyet"
-                            data-dogumtarihi="@personel.DogumTarihi?.ToString("yyyy-MM-dd")"
-                            data-telefon="@personel.Telefon"
-                            data-eposta="@personel.Eposta"
-                            data-isegiris="@personel.IseGirisTarihi.ToString("yyyy-MM-dd")"
-                            data-vardiyaid="@personel.VardiyaId"
-                            data-mahalle="@(adres?.Mahalle)"
-                            data-semt="@(adres?.Semt)"
-                            data-ilceadi="@(adres?.IlceAdi)"
-                            data-sehir="@(adres?.Sehir)"
-                            data-sokak="@(adres?.Sokak)"
-                            data-apartmanno="@(adres?.ApartmanNo)"
-                            data-diskapino="@(adres?.DisKapiNo)">
-                        Düzenle
-                    </button>
+                    @if (personel.AktifMi)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal" data-bs-target="#duzenleModal"
+                                data-id="@personel.Id"
+                                data-ad="@personel.Ad"
+                                data-soyad="@personel.Soyad"
+                                data-sicilno="@personel.SicilNo"
+                                data-tur="@((int)personel.PersonelTuru)"
+                                data-cinsiyet="@personel.Cinsiyet"
+                                data-dogumtarihi="@personel.DogumTarihi?.ToString("yyyy-MM-dd")"
+                                data-telefon="@personel.Telefon"
+                                data-eposta="@personel.Eposta"
+                                data-isegiris="@personel.IseGirisTarihi.ToString("yyyy-MM-dd")"
+                                data-vardiyaid="@personel.VardiyaId"
+                                data-mahalle="@(adres?.Mahalle)"
+                                data-semt="@(adres?.Semt)"
+                                data-ilceadi="@(adres?.IlceAdi)"
+                                data-sehir="@(adres?.Sehir)"
+                                data-sokak="@(adres?.Sokak)"
+                                data-apartmanno="@(adres?.ApartmanNo)"
+                                data-diskapino="@(adres?.DisKapiNo)">
+                            Düzenle
+                        </button>
+                    }
                     @if (personel.AktifMi)
                     {
                         <button type="button" class="btn btn-sm btn-outline-warning btn-isten-cikar" data-kid="@personel.Id">İşten Çıkar</button>
                     }
-                    @if (!hesabiVar)
+                    @if (personel.AktifMi && !hesabiVar)
                     {
                         <button type="button" class="btn btn-sm btn-outline-info btn-hesap-olustur" data-kid="@personel.Id">Hesap Oluştur</button>
+                    }
+                    @if (personel.AktifMi && hesabiVar)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-sifre-sifirla" data-kid="@personel.Id">Şifre Sıfırla</button>
                     }
                     <button type="button" class="btn btn-sm btn-outline-danger"
                             data-bs-toggle="modal" data-bs-target="#silModal"
@@ -395,9 +403,14 @@
                     type: 'POST',
                     data: { id: id },
                     success: function (sonuc) {
-                        if (sonuc === "başarılı") { location.reload(); }
-                        else { alert("Bir hata oluştu, tekrar deneyin."); }
-                    }
+                        if (sonuc.basarili) {
+                            if (sonuc.uyari) { alert(sonuc.uyari); }
+                            location.reload();
+                        } else {
+                            alert("Bir hata oluştu, tekrar deneyin.");
+                        }
+                    },
+                    error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
                 });
             });
         });
@@ -413,6 +426,26 @@
                         if (sonuc.basarili) {
                             alert('Hesap oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nŞifre: ' + sonuc.sifre + '\nRol: ' + sonuc.rol + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.');
                             location.reload();
+                        } else {
+                            alert(sonuc.mesaj);
+                        }
+                    },
+                    error: function () { alert('Bir hata oluştu, tekrar deneyin.'); }
+                });
+            });
+        });
+
+        document.querySelectorAll('.btn-sifre-sifirla').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!confirm('Bu personelin şifresini sıfırlamak istediğinize emin misiniz? Eski şifre geçersiz olacak.')) return;
+                var id = btn.getAttribute('data-kid');
+                $.ajax({
+                    url: '/Personel/SifreSifirla',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (sonuc) {
+                        if (sonuc.basarili) {
+                            alert('Yeni şifre oluşturuldu!\nKullanıcı Adı: ' + sonuc.kullaniciAdi + '\nYeni Şifre: ' + sonuc.sifre + '\n\nBu bilgiyi personele iletin, bir daha gösterilmeyecek.');
                         } else {
                             alert(sonuc.mesaj);
                         }

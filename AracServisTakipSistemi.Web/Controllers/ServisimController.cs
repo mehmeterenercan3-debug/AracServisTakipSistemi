@@ -12,12 +12,14 @@ namespace AracServisTakipSistemi.Web.Controllers;
 public class ServisimController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly AracServisi _aracServisi;
     private readonly RotaServisi _rotaServisi;
 
-    public ServisimController(UserManager<ApplicationUser> userManager, AracServisi aracServisi, RotaServisi rotaServisi)
+    public ServisimController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AracServisi aracServisi, RotaServisi rotaServisi)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _aracServisi = aracServisi;
         _rotaServisi = rotaServisi;
     }
@@ -142,5 +144,36 @@ public class ServisimController : Controller
         }
 
         return model;
+    }
+
+    [HttpGet]
+    public IActionResult SifreDegistir()
+    {
+        return View(new SifreDegistirViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SifreDegistir(SifreDegistirViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var kullanici = await _userManager.GetUserAsync(User);
+        if (kullanici == null) return RedirectToAction("Giris", "Hesap");
+
+        var sonuc = await _userManager.ChangePasswordAsync(kullanici, model.MevcutSifre, model.YeniSifre);
+        if (!sonuc.Succeeded)
+        {
+            foreach (var hata in sonuc.Errors)
+                ModelState.AddModelError(string.Empty, hata.Description);
+            return View(model);
+        }
+
+        // Şifre değiştikten sonra oturumu tazele — yoksa eski oturum çerezi bir süre daha geçerli kalabilir
+        await _signInManager.RefreshSignInAsync(kullanici);
+
+        TempData["Basari"] = "Şifreniz başarıyla değiştirildi.";
+        return RedirectToAction(nameof(Index));
     }
 }
