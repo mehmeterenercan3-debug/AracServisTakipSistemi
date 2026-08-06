@@ -47,6 +47,8 @@ builder.Services.AddScoped<IBakimKaydiRepository, BakimKaydiRepository>();
 // Servisler
 builder.Services.AddScoped<IMesafeHesaplayici, HaversineMesafeHesaplayici>();
 builder.Services.AddHttpClient<IGeocodingServisi, NominatimGeocodingServisi>();
+builder.Services.Configure<AracServisTakipSistemi.BLL.Options.SirketAyarlari>(
+    builder.Configuration.GetSection("SirketAyarlari"));
 builder.Services.AddScoped<RotaHesaplamaServisi>();
 builder.Services.AddScoped<PersonelServisi>();
 builder.Services.AddScoped<AracServisi>();
