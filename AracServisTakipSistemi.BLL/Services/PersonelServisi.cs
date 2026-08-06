@@ -203,6 +203,10 @@ public class PersonelServisi
         return silindiMi;
     }
 
+    public Task<List<Personel>> BeklemedeOlanlariGetirAsync() => _repository.BeklemedeOlanlariGetirAsync();
+
+    public Task<List<Personel>> KoordinatiEksikOlanlariGetirAsync() => _repository.KoordinatiEksikOlanlariGetirAsync();
+
     public Task<PersonelAdres?> AktifAdresiGetirAsync(int personelId) =>
         _adresRepository.AktifAdresiGetirAsync(personelId);
 }

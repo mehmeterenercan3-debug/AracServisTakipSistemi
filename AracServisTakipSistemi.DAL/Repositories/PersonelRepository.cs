@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AracServisTakipSistemi.BLL.Interfaces;
 using AracServisTakipSistemi.Entities.Entities;
+using AracServisTakipSistemi.Entities.Enums;
 using AracServisTakipSistemi.DAL.Data;
 
 namespace AracServisTakipSistemi.DAL.Repositories;
@@ -28,6 +29,19 @@ public class PersonelRepository : IPersonelRepository
             .Where(p => p.AktifMi).ToListAsync();
 
     public async Task<Personel?> IdIleGetirAsync(int id) => await _context.Personeller.FindAsync(id);
+
+    // Kapasite yetersizliği nedeniyle rotaya atanamayıp bekleyen personel
+    public async Task<List<Personel>> BeklemedeOlanlariGetirAsync() =>
+        await _context.Personeller.Include(p => p.Vardiya).Include(p => p.Bolge)
+            .Where(p => p.AktifMi && p.ServisDurumu == ServisDurumu.Beklemede)
+            .ToListAsync();
+
+    // Adresi geocode edilemediği (koordinatı bulunamadığı) için bölgesi belirlenemeyen personel
+    public async Task<List<Personel>> KoordinatiEksikOlanlariGetirAsync() =>
+        await _context.Personeller.Include(p => p.Vardiya).Include(p => p.Bolge)
+            .Where(p => p.AktifMi && _context.PersonelAdresleri
+                .Any(a => a.PersonelId == p.Id && a.AktifMi && (a.Enlem == null || a.Boylam == null)))
+            .ToListAsync();
 
     public async Task EkleAsync(Personel personel) => await _context.Personeller.AddAsync(personel);
 

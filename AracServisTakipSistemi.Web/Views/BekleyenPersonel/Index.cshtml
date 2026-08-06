@@ -1,0 +1,80 @@
+@model AracServisTakipSistemi.Web.Models.BekleyenPersonelViewModel
+@using AracServisTakipSistemi.Entities.Enums
+@{
+    ViewData["Title"] = "Bekleyen Personel / Uyarılar";
+}
+
+<h2>Bekleyen Personel / Uyarılar</h2>
+<p class="text-muted">Rota hesaplamasının sessizce atladığı, dikkat gerektiren durumlar burada listelenir.</p>
+
+<div class="card mt-3 mb-4">
+    <div class="card-header bg-warning text-dark">
+        Kapasite Nedeniyle Bekleyen Personel (@Model.KapasiteNedeniyleBekleyenler.Count)
+    </div>
+    <div class="card-body">
+        @if (!Model.KapasiteNedeniyleBekleyenler.Any())
+        {
+            <p class="text-muted mb-0">Şu an kapasite nedeniyle bekleyen personel yok.</p>
+        }
+        else
+        {
+            <p class="text-muted">Bu personelin bölgesindeki araçların kapasitesi (+ tampon) doldu. Yeni araç ataması yapıp <a asp-controller="Rota" asp-action="Index">Rota Hesaplama</a> ekranından "Rotaları Yeniden Hesapla" çalıştırın.</p>
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Sicil No</th>
+                        <th>Ad Soyad</th>
+                        <th>Vardiya</th>
+                        <th>Bölge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var personel in Model.KapasiteNedeniyleBekleyenler)
+                    {
+                        <tr>
+                            <td>@personel.SicilNo</td>
+                            <td>@personel.Ad @personel.Soyad</td>
+                            <td>@(personel.Vardiya?.VardiyaAdi ?? "-")</td>
+                            <td>@(personel.Bolge?.BolgeAdi ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        Konumu Bulunamayan Personel (@Model.KoordinatiEksikOlanlar.Count)
+    </div>
+    <div class="card-body">
+        @if (!Model.KoordinatiEksikOlanlar.Any())
+        {
+            <p class="text-muted mb-0">Şu an koordinatı eksik personel yok.</p>
+        }
+        else
+        {
+            <p class="text-muted">Bu personelin adresi otomatik bulunamadı (geocoding başarısız), bu yüzden hiçbir bölgeye/rotaya atanamıyor. <a asp-controller="Personel" asp-action="Index">Personel ekranından</a> adres bilgisini düzenleyip tekrar deneyin.</p>
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Sicil No</th>
+                        <th>Ad Soyad</th>
+                        <th>Vardiya</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var personel in Model.KoordinatiEksikOlanlar)
+                    {
+                        <tr>
+                            <td>@personel.SicilNo</td>
+                            <td>@personel.Ad @personel.Soyad</td>
+                            <td>@(personel.Vardiya?.VardiyaAdi ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
