@@ -6,8 +6,9 @@
     var vardiyalar = ViewBag.Vardiyalar as List<Vardiya>;
     var adresler = ViewBag.Adresler as Dictionary<int, PersonelAdres?>;
     var hesapVarMi = ViewBag.HesapVarMi as HashSet<int>;
+    var koordinatiEksikSayisi = ViewBag.KoordinatiEksikSayisi as int? ?? 0;
+    var koordinatiEksikIsimler = ViewBag.KoordinatiEksikIsimler as List<string>;
 }
-
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Personel</h2>
     <div>
@@ -15,7 +16,6 @@
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ekleModal">+ Yeni Personel</button>
     </div>
 </div>
-
 @if (TempData["Basari"] != null)
 {
     <div class="alert alert-success">@TempData["Basari"]</div>
@@ -24,7 +24,14 @@
 {
     <div class="alert alert-danger">@TempData["Hata"]</div>
 }
-
+@if (koordinatiEksikSayisi > 0)
+{
+    <div class="alert alert-warning">
+        <strong>⚠ @koordinatiEksikSayisi personelin konumu bulunamadı:</strong>
+        @string.Join(", ", koordinatiEksikIsimler ?? new List<string>())
+        — bu personeller hiçbir bölgeye/rotaya atanamıyor. Lütfen adres bilgilerini düzenleyip tekrar kaydedin.
+    </div>
+}
 <table class="table table-striped">
     <thead>
         <tr>
@@ -120,12 +127,10 @@
         }
     </tbody>
 </table>
-
 @if (!Model.Any())
 {
     <p class="text-muted">Henüz personel eklenmemiş.</p>
 }
-
 <!-- Ekle Modal -->
 <div class="modal fade" id="ekleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -194,7 +199,6 @@
                             </select>
                         </div>
                     </div>
-
                     <hr />
                     <h6 class="text-muted">İkametgah Adresi <small>(bölge ataması bu bilgiye göre otomatik yapılır)</small></h6>
                     <div class="row">
@@ -236,7 +240,6 @@
         </div>
     </div>
 </div>
-
 <!-- Düzenle Modal -->
 <div class="modal fade" id="duzenleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -248,7 +251,6 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="edit-Id" name="Id" />
-
                     <h6 class="text-muted">Kişisel Bilgiler</h6>
                     <div class="row">
                         <div class="col-md-6 mb-2">
@@ -307,7 +309,6 @@
                             </select>
                         </div>
                     </div>
-
                     <hr />
                     <h6 class="text-muted">İkametgah Adresi <small>(değiştirirseniz konum yeniden hesaplanıp bölge yeniden atanır)</small></h6>
                     <div class="row">
@@ -349,7 +350,6 @@
         </div>
     </div>
 </div>
-
 <!-- Sil Onay Modal -->
 <div class="modal fade" id="silModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -368,7 +368,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
         document.querySelectorAll('[data-bs-target="#duzenleModal"]').forEach(function (btn) {
@@ -393,12 +392,10 @@
                 document.getElementById('edit-DisKapiNo').value = btn.getAttribute('data-diskapino') || '';
             });
         });
-
         document.querySelectorAll('.btn-isten-cikar').forEach(function (btn) {
             btn.addEventListener('click', async function () {
                 var onaylandi = await onayIste('Bu personeli işten çıkarmak istediğinize emin misiniz?');
                 if (!onaylandi) return;
-
                 var id = btn.getAttribute('data-kid');
                 $.ajax({
                     url: '/Personel/IstenCikar',
@@ -416,7 +413,6 @@
                 });
             });
         });
-
         document.querySelectorAll('.btn-hesap-olustur').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var id = btn.getAttribute('data-kid');
@@ -436,12 +432,10 @@
                 });
             });
         });
-
         document.querySelectorAll('.btn-sifre-sifirla').forEach(function (btn) {
             btn.addEventListener('click', async function () {
                 var onaylandi = await onayIste('Bu personelin şifresini sıfırlamak istediğinize emin misiniz? Eski şifre geçersiz olacak.');
                 if (!onaylandi) return;
-
                 var id = btn.getAttribute('data-kid');
                 $.ajax({
                     url: '/Personel/SifreSifirla',
@@ -458,7 +452,6 @@
                 });
             });
         });
-
         var silinecekId = null;
         document.querySelectorAll('[data-bs-target="#silModal"]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -468,10 +461,8 @@
                     "'" + ad + "' kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
             });
         });
-
         document.getElementById('silOnaylaBtn').addEventListener('click', function () {
             if (!silinecekId) return;
-
             $.ajax({
                 url: '/Personel/Sil',
                 type: 'POST',
@@ -483,11 +474,9 @@
                 error: function () { mesajGoster('Bir hata oluştu, tekrar deneyin.', 'hata'); }
             });
         });
-
         document.getElementById('btnBolgeleriYenidenHesapla').addEventListener('click', async function () {
             var onaylandi = await onayIste('Tüm aktif personelin bölge ataması, güncel bölge tablosuna göre yeniden hesaplanacak. Devam edilsin mi?');
             if (!onaylandi) return;
-
             $.ajax({
                 url: '/Personel/BolgeleriYenidenHesapla',
                 type: 'POST',

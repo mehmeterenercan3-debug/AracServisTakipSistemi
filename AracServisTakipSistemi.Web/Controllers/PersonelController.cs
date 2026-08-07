@@ -42,6 +42,10 @@ public class PersonelController : Controller
             .ToHashSet();
         ViewBag.HesapVarMi = hesapliPersonelIdleri;
 
+        var koordinatiEksikOlanlar = await _personelServisi.KoordinatiEksikOlanlariGetirAsync();
+        ViewBag.KoordinatiEksikSayisi = koordinatiEksikOlanlar.Count;
+        ViewBag.KoordinatiEksikIsimler = koordinatiEksikOlanlar.Select(p => $"{p.Ad} {p.Soyad}").ToList();
+
         return View(personeller);
     }
 
@@ -148,11 +152,6 @@ public class PersonelController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Personel işten çıkınca kapasite hiçbir zaman artmaz (sadece azalır) — bu yüzden
-    // güvenle, sessizce ve her zaman otomatik yeniden hesaplayabiliriz.
-    // Şoförse: bağlı olduğu araç "şoförsüz" kalır — yoksa rota hesaplaması işten ayrılmış
-    // kişinin evini başlangıç noktası olarak kullanmaya devam eder.
-    // Giriş hesabı varsa tamamen silinir — artık giriş yapamaz, "Hesap Silindi" gösterilir.
     [HttpPost]
     public async Task<IActionResult> IstenCikar(int id)
     {
@@ -197,8 +196,6 @@ public class PersonelController : Controller
         return Json(new { basarili = true, guncellenen = guncellenenSayisi });
     }
 
-    // Personele giriş yapabileceği bir kullanıcı hesabı oluşturur — kullanıcı adı sicil no,
-    // varsayılan şifre üretilir, personel türüne göre Şoför/Personel rolü verilir.
     [HttpPost]
     public async Task<IActionResult> KullaniciOlustur(int id)
     {
@@ -211,7 +208,6 @@ public class PersonelController : Controller
             return Json(new { basarili = false, mesaj = "Bu personel için zaten bir kullanıcı hesabı var." });
 
         var varsayilanSifre = $"Servis{DateTime.Now.Year}!";
-
         var yeniKullanici = new ApplicationUser
         {
             UserName = personel.SicilNo,
@@ -238,8 +234,6 @@ public class PersonelController : Controller
         });
     }
 
-    // Şifreyi "görmüyoruz" (hiçbir sistemde görülemez, hash'lenmiş halde tutulur) —
-    // bunun yerine admin istediği zaman yeni bir şifre üretip atayabiliyor.
     [HttpPost]
     public async Task<IActionResult> SifreSifirla(int id)
     {
@@ -248,7 +242,6 @@ public class PersonelController : Controller
             return Json(new { basarili = false, mesaj = "Bu personelin bir hesabı yok." });
 
         var yeniSifre = $"Servis{DateTime.Now.Year}{new Random().Next(10, 99)}!";
-
         var token = await _userManager.GeneratePasswordResetTokenAsync(kullanici);
         var sonuc = await _userManager.ResetPasswordAsync(kullanici, token, yeniSifre);
 

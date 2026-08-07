@@ -72,12 +72,14 @@ public class PersonelServisi
         await _repository.KaydetAsync();
 
         var mevcutAdres = await _adresRepository.AktifAdresiGetirAsync(personel.Id);
+
         if (mevcutAdres == null)
         {
             yeniAdresVerisi.PersonelId = personel.Id;
             yeniAdresVerisi.BaslangicTarihi = DateTime.Now;
 
             var (basariliYeni, uyariYeni) = await AdresiGeocodeEtAsync(yeniAdresVerisi);
+
             await _adresRepository.EkleAsync(yeniAdresVerisi);
             await _adresRepository.KaydetAsync();
 
@@ -129,6 +131,18 @@ public class PersonelServisi
 
     private async Task<(bool GeocodingBasarili, string? Uyari)> AdresiGeocodeEtAsync(PersonelAdres adres)
     {
+        // Adres alanlarının hepsi boşsa (ya da sadece boşluk içeriyorsa),
+        // Nominatim'e hiç istek atmıyoruz — boş sorgu bazen alakasız/genel bir
+        // sonuç (örn. "Türkiye" geneli) döndürebiliyor, bu da yanlış koordinat kaydına yol açar.
+        var alanlarDoluMu = new[] { adres.Sokak, adres.Mahalle, adres.IlceAdi, adres.Sehir }
+            .Any(alan => !string.IsNullOrWhiteSpace(alan));
+
+        if (!alanlarDoluMu)
+        {
+            adres.GeocodeBasariliMi = false;
+            return (false, "Adres bilgisi boş girildi, koordinat bulunamadı. Lütfen en az bir adres alanını doldurun.");
+        }
+
         var tamAdres = $"{adres.Sokak} {adres.DisKapiNo}, {adres.Mahalle}, {adres.IlceAdi}, {adres.Sehir}";
         var sonuc = await _geocodingServisi.AdresteneKoordinatBulAsync(tamAdres);
 
@@ -220,7 +234,6 @@ public class PersonelServisi
         var silindiMi = await _repository.SilAsync(id);
         if (silindiMi)
             await _repository.KaydetAsync();
-
         return silindiMi;
     }
 
