@@ -185,11 +185,11 @@
                         if (sonuc === "başarılı") {
                             location.reload();
                         } else {
-                            alert("Bir hata oluştu, tekrar deneyin.");
+                            mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                         }
                     },
                     error: function () {
-                        alert("Bir hata oluştu, tekrar deneyin.");
+                        mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                     }
                 });
             });
@@ -218,11 +218,11 @@
                     if (sonuc === "başarılı") {
                         location.reload();
                     } else {
-                        alert("Bu vardiyaya bağlı personel olduğu için silinemedi. Önce personelleri başka bir vardiyaya taşıyın ya da 'Pasife Al' kullanın.");
+                        mesajGoster("Bu vardiyaya bağlı personel olduğu için silinemedi. Önce personelleri başka bir vardiyaya taşıyın ya da 'Pasife Al' kullanın.", 'hata');
                     }
                 },
                 error: function () {
-                    alert("Bir hata oluştu, tekrar deneyin.");
+                    mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                 }
             });
         });

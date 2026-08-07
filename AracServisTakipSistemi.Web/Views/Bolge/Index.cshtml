@@ -290,11 +290,11 @@
                         if (sonuc === "başarılı") {
                             location.reload();
                         } else {
-                            alert("Bir hata oluştu, tekrar deneyin.");
+                            mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                         }
                     },
                     error: function () {
-                        alert("Bir hata oluştu, tekrar deneyin.");
+                        mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                     }
                 });
             });
@@ -322,11 +322,11 @@
                     if (sonuc === "başarılı") {
                         location.reload();
                     } else {
-                        alert("Bu bölgeye bağlı personel veya rota olduğu için silinemedi. Önce onları taşıyın ya da 'Pasife Al' kullanın.");
+                        mesajGoster("Bu bölgeye bağlı personel veya rota olduğu için silinemedi. Önce onları taşıyın ya da 'Pasife Al' kullanın.", 'hata');
                     }
                 },
                 error: function () {
-                    alert("Bir hata oluştu, tekrar deneyin.");
+                    mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                 }
             });
         });

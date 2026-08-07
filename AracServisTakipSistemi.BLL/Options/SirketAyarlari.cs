@@ -11,4 +11,8 @@ public class SirketAyarlari
 
     // Şoför, vardiya bitişinden bu kadar dakika sonra şirketten ayrılır
     public int DonusKalkisTamponDk { get; set; } = 15;
+
+    // Geocode edilen bir adres, en yakın bölge merkezine bu mesafeden (km) daha uzaksa
+    // atama yapılmaz — muhtemelen adres yanlış/eksik girilmiş ya da geocoding yanlış eşleşmiştir.
+    public double MaksimumBolgeMesafesiKm { get; set; } = 100;
 }

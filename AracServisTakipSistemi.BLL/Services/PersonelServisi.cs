@@ -1,4 +1,6 @@
-﻿using AracServisTakipSistemi.BLL.Interfaces;
+﻿using Microsoft.Extensions.Options;
+using AracServisTakipSistemi.BLL.Interfaces;
+using AracServisTakipSistemi.BLL.Options;
 using AracServisTakipSistemi.Entities.Entities;
 
 namespace AracServisTakipSistemi.BLL.Services;
@@ -10,19 +12,22 @@ public class PersonelServisi
     private readonly IGeocodingServisi _geocodingServisi;
     private readonly IBolgeRepository _bolgeRepository;
     private readonly IMesafeHesaplayici _mesafeHesaplayici;
+    private readonly SirketAyarlari _sirketAyarlari;
 
     public PersonelServisi(
         IPersonelRepository repository,
         IPersonelAdresRepository adresRepository,
         IGeocodingServisi geocodingServisi,
         IBolgeRepository bolgeRepository,
-        IMesafeHesaplayici mesafeHesaplayici)
+        IMesafeHesaplayici mesafeHesaplayici,
+        IOptions<SirketAyarlari> sirketAyarlari)
     {
         _repository = repository;
         _adresRepository = adresRepository;
         _geocodingServisi = geocodingServisi;
         _bolgeRepository = bolgeRepository;
         _mesafeHesaplayici = mesafeHesaplayici;
+        _sirketAyarlari = sirketAyarlari.Value;
     }
 
     public Task<List<Personel>> TumPersonelleriGetirAsync() => _repository.TumunuGetirAsync();
@@ -52,9 +57,9 @@ public class PersonelServisi
 
         if (geocodingBasarili && adres.Enlem.HasValue && adres.Boylam.HasValue)
         {
-            var atandiMi = await EnYakinBolgeyeAtaAsync(personel, adres.Enlem.Value, adres.Boylam.Value);
+            var (atandiMi, bolgeUyarisi) = await EnYakinBolgeyeAtaAsync(personel, adres.Enlem.Value, adres.Boylam.Value);
             if (!atandiMi)
-                uyari = "Koordinat bulundu ama tanımlı bir bölge merkezi olmadığı için otomatik bölge ataması yapılamadı.";
+                uyari = bolgeUyarisi;
         }
 
         return (geocodingBasarili, uyari);
@@ -77,7 +82,10 @@ public class PersonelServisi
             await _adresRepository.KaydetAsync();
 
             if (basariliYeni && yeniAdresVerisi.Enlem.HasValue && yeniAdresVerisi.Boylam.HasValue)
-                await EnYakinBolgeyeAtaAsync(personel, yeniAdresVerisi.Enlem.Value, yeniAdresVerisi.Boylam.Value);
+            {
+                var (atandiMi, bolgeUyarisi) = await EnYakinBolgeyeAtaAsync(personel, yeniAdresVerisi.Enlem.Value, yeniAdresVerisi.Boylam.Value);
+                if (!atandiMi) uyariYeni = bolgeUyarisi;
+            }
 
             return (basariliYeni, uyariYeni);
         }
@@ -111,9 +119,9 @@ public class PersonelServisi
 
         if (geocodingBasarili && mevcutAdres.Enlem.HasValue && mevcutAdres.Boylam.HasValue)
         {
-            var atandiMi = await EnYakinBolgeyeAtaAsync(personel, mevcutAdres.Enlem.Value, mevcutAdres.Boylam.Value);
+            var (atandiMi, bolgeUyarisi) = await EnYakinBolgeyeAtaAsync(personel, mevcutAdres.Enlem.Value, mevcutAdres.Boylam.Value);
             if (!atandiMi)
-                uyari = "Koordinat bulundu ama tanımlı bir bölge merkezi olmadığı için otomatik bölge ataması yapılamadı.";
+                uyari = bolgeUyarisi;
         }
 
         return (geocodingBasarili, uyari);
@@ -138,22 +146,35 @@ public class PersonelServisi
         return (false, $"Adres otomatik bulunamadı ({sonuc.HataMesaji}). Bölge ataması yapılamadı.");
     }
 
-    private async Task<bool> EnYakinBolgeyeAtaAsync(Personel personel, double enlem, double boylam)
+    // Bulunan koordinat, en yakın bölgeden bile çok uzaksa (SirketAyarlari.MaksimumBolgeMesafesiKm)
+    // atama YAPMIYORUZ — bu genelde adresin eksik/hatalı girilmesinden ya da geocoding'in
+    // alakasız bir yere yanlış eşleşmesinden kaynaklanır (örn. "a a a a" gibi anlamsız girdi).
+    private async Task<(bool Basarili, string? Uyari)> EnYakinBolgeyeAtaAsync(Personel personel, double enlem, double boylam)
     {
         var bolgeler = await _bolgeRepository.AktifleriGetirAsync();
         var koordinatiOlanBolgeler = bolgeler.Where(b => b.MerkezEnlem.HasValue && b.MerkezBoylam.HasValue).ToList();
 
-        if (koordinatiOlanBolgeler.Count == 0) return false;
+        if (koordinatiOlanBolgeler.Count == 0)
+            return (false, "Koordinat bulundu ama tanımlı bir bölge merkezi olmadığı için otomatik bölge ataması yapılamadı.");
 
         var enYakinBolge = koordinatiOlanBolgeler
             .OrderBy(b => _mesafeHesaplayici.MesafeHesaplaKm(enlem, boylam, b.MerkezEnlem!.Value, b.MerkezBoylam!.Value))
             .First();
 
+        var mesafeKm = _mesafeHesaplayici.MesafeHesaplaKm(enlem, boylam, enYakinBolge.MerkezEnlem!.Value, enYakinBolge.MerkezBoylam!.Value);
+
+        if (mesafeKm > _sirketAyarlari.MaksimumBolgeMesafesiKm)
+        {
+            return (false, $"Bulunan konum en yakın bölgeye ({enYakinBolge.BolgeAdi}) {mesafeKm:F0} km uzaklıkta — " +
+                $"bu, kabul edilen sınırın ({_sirketAyarlari.MaksimumBolgeMesafesiKm:F0} km) çok üzerinde. " +
+                "Adres muhtemelen eksik/hatalı girilmiş, lütfen adresi kontrol edip düzenleyin.");
+        }
+
         personel.BolgeId = enYakinBolge.Id;
         await _repository.GuncelleAsync(personel);
         await _repository.KaydetAsync();
 
-        return true;
+        return (true, null);
     }
 
     public async Task<int> TumBolgeAtamalariniYenidenHesaplaAsync()
@@ -167,7 +188,7 @@ public class PersonelServisi
             if (adres == null || adres.Enlem == null || adres.Boylam == null) continue;
 
             var eskiBolgeId = personel.BolgeId;
-            var atandiMi = await EnYakinBolgeyeAtaAsync(personel, adres.Enlem.Value, adres.Boylam.Value);
+            var (atandiMi, _) = await EnYakinBolgeyeAtaAsync(personel, adres.Enlem.Value, adres.Boylam.Value);
 
             if (atandiMi && personel.BolgeId != eskiBolgeId)
                 guncellenen++;

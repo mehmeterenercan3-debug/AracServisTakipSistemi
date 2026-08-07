@@ -6,9 +6,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Rota Hesaplama ve Yönetimi</h2>
-    <form asp-action="YenidenHesapla" method="post" class="d-inline">
+    <form asp-action="YenidenHesapla" method="post" class="d-inline" id="yenidenHesaplaForm">
         @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary" onclick="return confirm('Rotalar yeniden hesaplanacak, devam edilsin mi?');">
+        <button type="submit" class="btn btn-primary" id="btnYenidenHesapla">
             Rotaları Yeniden Hesapla
         </button>
     </form>
@@ -117,9 +117,17 @@
             });
         });
 
+        document.getElementById('yenidenHesaplaForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var form = this;
+            var onaylandi = await onayIste('Rotalar yeniden hesaplanacak, devam edilsin mi?');
+            if (onaylandi) form.submit();
+        });
+
         document.querySelectorAll('.btn-onayla').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Bu rotayı onaylamak istediğinize emin misiniz?')) return;
+            btn.addEventListener('click', async function () {
+                var onaylandi = await onayIste('Bu rotayı onaylamak istediğinize emin misiniz?');
+                if (!onaylandi) return;
 
                 var id = btn.getAttribute('data-kid');
                 $.ajax({
@@ -130,11 +138,11 @@
                         if (sonuc === "başarılı") {
                             location.reload();
                         } else {
-                            alert("Bir hata oluştu, tekrar deneyin.");
+                            mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                         }
                     },
                     error: function () {
-                        alert("Bir hata oluştu, tekrar deneyin.");
+                        mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata');
                     }
                 });
             });

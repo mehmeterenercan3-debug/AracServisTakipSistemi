@@ -373,7 +373,7 @@
                     data: { id: id },
                     success: function (sonuc) {
                         if (sonuc === "başarılı") { location.reload(); }
-                        else { alert("Bir hata oluştu, tekrar deneyin."); }
+                        else { mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata'); }
                     }
                 });
             });
@@ -397,9 +397,9 @@
                 data: { id: silinecekId },
                 success: function (sonuc) {
                     if (sonuc === "başarılı") { location.reload(); }
-                    else { alert("Bu araca bağlı rota kayıtları olduğu için silinemedi. Önce 'Pasife Al' kullanın."); }
+                    else { mesajGoster("Bu araca bağlı rota kayıtları olduğu için silinemedi. Önce 'Pasife Al' kullanın.", 'hata'); }
                 },
-                error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+                error: function () { mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata'); }
             });
         });
 
@@ -412,7 +412,7 @@
                     data: { id: id },
                     success: function (sonuc) {
                         if (!sonuc.basarili) {
-                            alert("Risk hesaplanamadı.");
+                            mesajGoster("Risk hesaplanamadı.", 'hata');
                             return;
                         }
                         document.getElementById('risk-baslik').innerText = sonuc.plaka + " — Risk Sonucu";
@@ -437,7 +437,7 @@
                         document.getElementById('risk-' + id).innerHTML =
                             '<span class="badge ' + renkSinifi + '">' + sonuc.seviye + ' (' + sonuc.puan + ')</span>';
                     },
-                    error: function () { alert("Bir hata oluştu, tekrar deneyin."); }
+                    error: function () { mesajGoster("Bir hata oluştu, tekrar deneyin.", 'hata'); }
                 });
             });
         });
@@ -457,8 +457,9 @@
                 $.get('/Arac/ArizaKayitlariPartial', { aracId: id }, function (html) {
                     document.getElementById('ariza-liste-alani').innerHTML = html;
                     document.querySelectorAll('.btn-ariza-sil').forEach(function (silBtn) {
-                        silBtn.addEventListener('click', function () {
-                            if (!confirm('Bu arıza kaydını silmek istediğinize emin misiniz?')) return;
+                        silBtn.addEventListener('click', async function () {
+                            var onaylandi = await onayIste('Bu arıza kaydını silmek istediğinize emin misiniz?');
+                            if (!onaylandi) return;
                             $.post('/Arac/ArizaSil', { id: silBtn.getAttribute('data-kid') }, function (sonuc) {
                                 if (sonuc === "başarılı") {
                                     document.getElementById('ariza-row-' + silBtn.getAttribute('data-kid')).remove();
@@ -471,8 +472,9 @@
                 $.get('/Arac/BakimKayitlariPartial', { aracId: id }, function (html) {
                     document.getElementById('bakim-liste-alani').innerHTML = html;
                     document.querySelectorAll('.btn-bakim-sil').forEach(function (silBtn) {
-                        silBtn.addEventListener('click', function () {
-                            if (!confirm('Bu bakım kaydını silmek istediğinize emin misiniz?')) return;
+                        silBtn.addEventListener('click', async function () {
+                            var onaylandi = await onayIste('Bu bakım kaydını silmek istediğinize emin misiniz?');
+                            if (!onaylandi) return;
                             $.post('/Arac/BakimSil', { id: silBtn.getAttribute('data-kid') }, function (sonuc) {
                                 if (sonuc === "başarılı") {
                                     document.getElementById('bakim-row-' + silBtn.getAttribute('data-kid')).remove();
