@@ -47,13 +47,8 @@ public class RotaYenidenHesaplamaOrkestraServisi
 
         var sonuc = _rotaHesaplamaServisi.RotalariHesapla(aktifPersoneller, aktifAraclar, aktifBolgeler, aktifVardiyalar, adresSozlugu);
 
-        // Eski aktif rotaları pasife çek
-        var eskiRotalar = await _rotaRepository.AktifRotalariGetirAsync();
-        foreach (var eski in eskiRotalar)
-        {
-            eski.AktifMi = false;
-            await _rotaRepository.GuncelleAsync(eski);
-        }
+        // Eski rota kayıtlarını tamamen sil
+        await _rotaRepository.EskiRotalariSilAsync();
 
         // Yeni rotaları kaydet — normalde otomatik onaylı, sadece kapasite yetersizse onay bekliyor
         foreach (var rotaSonucu in sonuc.Rotalar)

@@ -56,5 +56,19 @@ public class RotaRepository : IRotaRepository
         return Task.CompletedTask;
     }
 
+    public async Task EskiRotalariSilAsync()
+    {
+    var rotalar = await _context.Rotalar.ToListAsync();
+
+    var duraklar = await _context.RotaDuraklari.ToListAsync();
+    var rotaBolgeleri = await _context.RotaBolgeleri.ToListAsync();
+
+    _context.RotaDuraklari.RemoveRange(duraklar);
+    _context.RotaBolgeleri.RemoveRange(rotaBolgeleri);
+    _context.Rotalar.RemoveRange(rotalar);
+
+    await _context.SaveChangesAsync();
+    }
+
     public async Task KaydetAsync() => await _context.SaveChangesAsync();
 }

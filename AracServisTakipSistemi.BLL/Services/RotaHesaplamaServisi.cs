@@ -12,6 +12,11 @@ public class RotaHesaplamaServisi
     private readonly IMesafeHesaplayici _mesafeHesaplayici;
     private readonly SirketAyarlari _sirketAyarlari;
     private const double OrtalamaHizKmSaat = 35.0;
+    private const double DurakBeklemeSuresiDk = 3.0;
+
+    // Bir aracı doldururken, sıradaki iki kişi arasında bu mesafeden (km) büyük bir sıçrama varsa,
+    // "burada farklı bir küme başlıyor" kabul edip aracı kapasiteye kadar doldurmaya zorlamıyoruz.
+    private const double DogalBoslukEsigiKm = 15.0;
 
     public RotaHesaplamaServisi(IMesafeHesaplayici mesafeHesaplayici, IOptions<SirketAyarlari> sirketAyarlari)
     {
@@ -78,7 +83,9 @@ public class RotaHesaplamaServisi
         var kullanilabilirAraclar = araclar.Where(a =>
             a.SoforPersonelId.HasValue &&
             adresSozlugu.ContainsKey(a.SoforPersonelId.Value) &&
-            adresSozlugu[a.SoforPersonelId.Value].Enlem != null).ToList();
+            adresSozlugu[a.SoforPersonelId.Value].Enlem != null)
+            .OrderByDescending(a => a.KapasiteSayisi)   // büyük kapasiteli araçlar önce kullanılsın — en kalabalık ilk küme büyük araca düşsün
+            .ToList();
 
         foreach (var arac in araclar.Except(kullanilabilirAraclar))
             sonuc.Uyarilar.Add($"'{arac.Plaka}' plakalı aracın şoförü/koordinatı tanımlı değil, kullanılamadı.");
@@ -118,7 +125,13 @@ public class RotaHesaplamaServisi
             }
 
             var musaitAraclar = kullanilabilirAraclar.Where(a => !kullanilmisAraclar.Contains(a.Id)).ToList();
-            var kalanGrupPersonel = new List<Personel>(grupPersonel);
+
+            // Araçlara bölmeden ÖNCE tüm bölge grubunu coğrafi olarak (bölge merkezinden başlayarak)
+            // tek bir zincire diziyoruz — böylece ardışık parçalara bölündüğünde
+            // birbirine yakın kişiler aynı araca düşer, rastgele/liste sırasına göre değil.
+            var kalanGrupPersonel = seedBolge.MerkezEnlem.HasValue && seedBolge.MerkezBoylam.HasValue
+                ? SiraOptimizeEt(grupPersonel, (seedBolge.MerkezEnlem.Value, seedBolge.MerkezBoylam.Value), adresSozlugu)
+                : new List<Personel>(grupPersonel);
 
             while (kalanGrupPersonel.Count > 0)
             {
@@ -137,7 +150,7 @@ public class RotaHesaplamaServisi
                     break;
                 }
 
-                var buArayaAlinacaklar = kalanGrupPersonel.Take(uygunArac.KapasiteSayisi + seedBolge.KapasiteTamponu).ToList();
+                var buArayaAlinacaklar = KapasiteyeGoreDogalGrupAl(kalanGrupPersonel, uygunArac.KapasiteSayisi, adresSozlugu);
                 kullanilmisAraclar.Add(uygunArac.Id);
                 kalanGrupPersonel = kalanGrupPersonel.Skip(buArayaAlinacaklar.Count).ToList();
 
@@ -210,6 +223,29 @@ public class RotaHesaplamaServisi
         return sonuc;
     }
 
+    // Coğrafi olarak sıralı bir listeden, kapasiteye kadar kişi alır — ama araya "doğal bir boşluk"
+    // (DogalBoslukEsigiKm'den büyük bir sıçrama) girerse, kapasiteyi doldurmaya zorlamadan orada durur.
+    // Bu, birbirinden uzak adreslerin sırf kapasiteyi doldurmak için aynı araca tıkılmasını önler.
+    private List<Personel> KapasiteyeGoreDogalGrupAl(List<Personel> siraliListe, int kapasite, Dictionary<int, PersonelAdres> adresSozlugu)
+    {
+        if (siraliListe.Count <= kapasite) return new List<Personel>(siraliListe);
+
+        var aday = siraliListe.Take(kapasite).ToList();
+
+        for (int i = 1; i < aday.Count; i++)
+        {
+            var onceki = adresSozlugu[aday[i - 1].Id];
+            var simdiki = adresSozlugu[aday[i].Id];
+            var mesafe = _mesafeHesaplayici.MesafeHesaplaKm(
+                onceki.Enlem!.Value, onceki.Boylam!.Value, simdiki.Enlem!.Value, simdiki.Boylam!.Value);
+
+            if (mesafe > DogalBoslukEsigiKm)
+                return aday.Take(i).ToList();   // doğal boşluk bulundu, burada kes
+        }
+
+        return aday;   // hiç doğal boşluk yok, kapasiteyi tam doldur
+    }
+
     private List<Personel> SiraOptimizeEt(List<Personel> personeller, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
     {
         if (personeller.Count == 0) return personeller;
@@ -232,25 +268,48 @@ public class RotaHesaplamaServisi
     }
 
     // Başlangıç noktasından (şoför evi ya da şirket) her durağa varana kadar geçen kümülatif süre (dk)
-    private List<double> KumulatifSureHesapla(List<Personel> siraliListe, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
-    {
-        var sonuc = new List<double>();
-        if (siraliListe.Count == 0) return sonuc;
+    private List<double> KumulatifSureHesapla(
+    List<Personel> siraliListe,
+    (double Enlem, double Boylam) baslangic,
+    Dictionary<int, PersonelAdres> adresSozlugu)
+{
+    var sonuc = new List<double>();
 
-        var ilkAdres = adresSozlugu[siraliListe[0].Id];
-        double kumulatifKm = _mesafeHesaplayici.MesafeHesaplaKm(baslangic.Enlem, baslangic.Boylam, ilkAdres.Enlem!.Value, ilkAdres.Boylam!.Value);
-        sonuc.Add(kumulatifKm / OrtalamaHizKmSaat * 60);
-
-        for (int i = 0; i < siraliListe.Count - 1; i++)
-        {
-            var a1 = adresSozlugu[siraliListe[i].Id];
-            var a2 = adresSozlugu[siraliListe[i + 1].Id];
-            kumulatifKm += _mesafeHesaplayici.MesafeHesaplaKm(a1.Enlem!.Value, a1.Boylam!.Value, a2.Enlem!.Value, a2.Boylam!.Value);
-            sonuc.Add(kumulatifKm / OrtalamaHizKmSaat * 60);
-        }
-
+    if (siraliListe.Count == 0)
         return sonuc;
+
+    var ilkAdres = adresSozlugu[siraliListe[0].Id];
+
+    double kumulatifKm = _mesafeHesaplayici.MesafeHesaplaKm(
+        baslangic.Enlem,
+        baslangic.Boylam,
+        ilkAdres.Enlem!.Value,
+        ilkAdres.Boylam!.Value);
+
+    double kumulatifDk = kumulatifKm / OrtalamaHizKmSaat * 60;
+
+    sonuc.Add(kumulatifDk);
+
+    for (int i = 0; i < siraliListe.Count - 1; i++)
+    {
+        var a1 = adresSozlugu[siraliListe[i].Id];
+        var a2 = adresSozlugu[siraliListe[i + 1].Id];
+
+        kumulatifKm += _mesafeHesaplayici.MesafeHesaplaKm(
+            a1.Enlem!.Value,
+            a1.Boylam!.Value,
+            a2.Enlem!.Value,
+            a2.Boylam!.Value);
+
+        kumulatifDk =
+            kumulatifKm / OrtalamaHizKmSaat * 60
+            + ((i + 1) * DurakBeklemeSuresiDk);
+
+        sonuc.Add(kumulatifDk);
     }
+
+    return sonuc;
+}
 
     private double KumulatifMesafeHesapla(List<Personel> siraliListe, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
     {

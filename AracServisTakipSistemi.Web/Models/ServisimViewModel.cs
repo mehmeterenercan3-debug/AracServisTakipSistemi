@@ -8,6 +8,7 @@ public class ServisimViewModel
     public string Rol { get; set; } = string.Empty; // "Sofor" ya da "Personel"
     public string AracPlaka { get; set; } = string.Empty;
     public string SoforAdSoyad { get; set; } = string.Empty;
+    public string SoforTelefon { get; set; } = string.Empty;
 
     public ServisimYonBilgisi? Gidis { get; set; }
     public ServisimYonBilgisi? Donus { get; set; }
@@ -31,5 +32,7 @@ public class ServisimDurakViewModel
 {
     public int SiraNo { get; set; }
     public string PersonelAdSoyad { get; set; } = string.Empty;
+    public string PersonelTelefon { get; set; } = string.Empty;
     public string VarisSaati { get; set; } = string.Empty;
+    public string Adres { get; set; } = string.Empty;
 }

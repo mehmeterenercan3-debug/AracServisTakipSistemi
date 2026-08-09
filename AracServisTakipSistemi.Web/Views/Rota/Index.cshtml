@@ -51,7 +51,7 @@
                         <span class="badge bg-dark">Dönüş (Akşam)</span>
                     }
                 </td>
-                <td>@rota.ToplamMesafeKm km</td>
+                <td>@rota.ToplamMesafeKm.ToString("0") km</td>
                 <td>@rota.TahminiSureDk dk</td>
                 <td id="durum-badge-@rota.Id">
                     @if (rota.Durum == "Onaylandi")

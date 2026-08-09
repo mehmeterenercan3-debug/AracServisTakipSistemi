@@ -22,4 +22,5 @@ public interface IRotaRepository
     Task EkleAsync(Rota rota);
     Task GuncelleAsync(Rota rota);
     Task KaydetAsync();
+    Task EskiRotalariSilAsync();
 }

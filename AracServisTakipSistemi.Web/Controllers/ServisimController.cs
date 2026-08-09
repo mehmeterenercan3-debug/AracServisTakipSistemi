@@ -15,13 +15,20 @@ public class ServisimController : Controller
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly AracServisi _aracServisi;
     private readonly RotaServisi _rotaServisi;
+    private readonly PersonelServisi _personelServisi;
 
-    public ServisimController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AracServisi aracServisi, RotaServisi rotaServisi)
+    public ServisimController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        AracServisi aracServisi,
+        RotaServisi rotaServisi,
+        PersonelServisi personelServisi)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _aracServisi = aracServisi;
         _rotaServisi = rotaServisi;
+        _personelServisi = personelServisi;
     }
 
     public async Task<IActionResult> Index()
@@ -78,26 +85,53 @@ public class ServisimController : Controller
         var gidisRota = rotalar.FirstOrDefault(r => r.Yon == RotaYonu.Gidis);
         var donusRota = rotalar.FirstOrDefault(r => r.Yon == RotaYonu.Donus);
 
-        if (gidisRota != null) model.Gidis = RotaYiYonBilgisineCevir(gidisRota);
-        if (donusRota != null) model.Donus = RotaYiYonBilgisineCevir(donusRota);
+        if (gidisRota != null) model.Gidis = await RotaYiYonBilgisineCevirAsync(gidisRota);
+        if (donusRota != null) model.Donus = await RotaYiYonBilgisineCevirAsync(donusRota);
 
         return model;
     }
 
-    private ServisimYonBilgisi RotaYiYonBilgisineCevir(Rota rota) => new()
+    private async Task<ServisimYonBilgisi> RotaYiYonBilgisineCevirAsync(Rota rota)
     {
-        RotaDurumu = rota.Durum.ToString(),
-        ToplamMesafeKm = rota.ToplamMesafeKm,
-        TahminiSureDk = rota.TahminiSureDk,
-        TumDuraklar = rota.Duraklar
-            .OrderBy(d => d.SiraNo)
-            .Select(d => new ServisimDurakViewModel
+        var yonBilgisi = new ServisimYonBilgisi
+        {
+            RotaDurumu = rota.Durum.ToString(),
+            ToplamMesafeKm = rota.ToplamMesafeKm,
+            TahminiSureDk = rota.TahminiSureDk
+        };
+
+        foreach (var durak in rota.Duraklar.OrderBy(d => d.SiraNo))
+        {
+            var adresMetni = await AcikAdresGetirAsync(durak.PersonelId);
+
+            yonBilgisi.TumDuraklar.Add(new ServisimDurakViewModel
             {
-                SiraNo = d.SiraNo,
-                PersonelAdSoyad = d.Personel != null ? $"{d.Personel.Ad} {d.Personel.Soyad}" : $"Personel #{d.PersonelId}",
-                VarisSaati = d.TahminiVarisSaati.ToString(@"hh\:mm")
-            }).ToList()
-    };
+                SiraNo = durak.SiraNo,
+                PersonelAdSoyad = durak.Personel != null ? $"{durak.Personel.Ad} {durak.Personel.Soyad}" : $"Personel #{durak.PersonelId}",
+                PersonelTelefon = durak.Personel?.Telefon ?? "-",
+                VarisSaati = durak.TahminiVarisSaati.ToString(@"hh\:mm"),
+                Adres = adresMetni
+            });
+        }
+
+        return yonBilgisi;
+    }
+
+    // Şoförün gerçekten evi bulabilmesi için okunabilir, açık adres metni üretir
+    private async Task<string> AcikAdresGetirAsync(int personelId)
+    {
+        var adres = await _personelServisi.AktifAdresiGetirAsync(personelId);
+        if (adres == null) return "Adres bilgisi yok";
+
+        var parcalar = new List<string>();
+        if (!string.IsNullOrWhiteSpace(adres.Sokak)) parcalar.Add(adres.Sokak);
+        if (!string.IsNullOrWhiteSpace(adres.DisKapiNo)) parcalar.Add($"No:{adres.DisKapiNo}");
+        if (!string.IsNullOrWhiteSpace(adres.Mahalle)) parcalar.Add(adres.Mahalle + " Mah.");
+        if (!string.IsNullOrWhiteSpace(adres.IlceAdi)) parcalar.Add(adres.IlceAdi);
+        if (!string.IsNullOrWhiteSpace(adres.Sehir)) parcalar.Add(adres.Sehir);
+
+        return parcalar.Count > 0 ? string.Join(", ", parcalar) : "Adres bilgisi yok";
+    }
 
     private async Task<ServisimViewModel> PersonelGorunumuOlusturAsync(int personelId)
     {
@@ -120,7 +154,8 @@ public class ServisimController : Controller
             KayitBulunduMu = true,
             Rol = "Personel",
             AracPlaka = ornekArac?.Plaka ?? "-",
-            SoforAdSoyad = ornekArac?.SoforPersonel != null ? $"{ornekArac.SoforPersonel.Ad} {ornekArac.SoforPersonel.Soyad}" : "-"
+            SoforAdSoyad = ornekArac?.SoforPersonel != null ? $"{ornekArac.SoforPersonel.Ad} {ornekArac.SoforPersonel.Soyad}" : "-",
+            SoforTelefon = ornekArac?.SoforPersonel?.Telefon ?? "-"
         };
 
         if (gidisDurak != null)
@@ -170,7 +205,6 @@ public class ServisimController : Controller
             return View(model);
         }
 
-        // Şifre değiştikten sonra oturumu tazele — yoksa eski oturum çerezi bir süre daha geçerli kalabilir
         await _signInManager.RefreshSignInAsync(kullanici);
 
         TempData["Basari"] = "Şifreniz başarıyla değiştirildi.";

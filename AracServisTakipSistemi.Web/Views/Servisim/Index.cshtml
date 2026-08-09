@@ -14,7 +14,7 @@
 }
 else
 {
-    <p class="text-muted">Araç: <strong>@Model.AracPlaka</strong>@(Model.Rol == "Personel" ? $" — Şoför: {Model.SoforAdSoyad}" : "")</p>
+    <p class="text-muted">Araç: <strong>@Model.AracPlaka</strong>@(Model.Rol == "Personel" ? $" — Şoför: {Model.SoforAdSoyad} — Telefon: {Model.SoforTelefon}" : "")</p>
 
     <div class="row mt-3">
         <div class="col-md-6 mb-3">
@@ -28,13 +28,13 @@ else
                     else if (Model.Rol == "Sofor")
                     {
                         <p class="mb-1"><strong>Durum:</strong> @(Model.Gidis.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
-                        <p class="mb-3"><strong>Toplam:</strong> @Model.Gidis.ToplamMesafeKm km / @Model.Gidis.TahminiSureDk dk</p>
+                        <p class="mb-3"><strong>Toplam:</strong> @Model.Gidis.ToplamMesafeKm.ToString("0") km / @Model.Gidis.TahminiSureDk dk</p>
                         <table class="table table-sm table-striped">
-                            <thead><tr><th>Sıra</th><th>Personel</th><th>Varış</th></tr></thead>
+                            <thead><tr><th>Sıra</th><th>Personel</th><th>Telefon</th><th>Adres</th><th>Varış</th></tr></thead>
                             <tbody>
                                 @foreach (var durak in Model.Gidis.TumDuraklar)
                                 {
-                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.VarisSaati</td></tr>
+                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.PersonelTelefon</td><td>@durak.Adres</td><td>@durak.VarisSaati</td></tr>
                                 }
                             </tbody>
                         </table>
@@ -60,13 +60,13 @@ else
                     else if (Model.Rol == "Sofor")
                     {
                         <p class="mb-1"><strong>Durum:</strong> @(Model.Donus.RotaDurumu == "Onaylandi" ? "Onaylandı" : "Onay Bekliyor")</p>
-                        <p class="mb-3"><strong>Toplam:</strong> @Model.Donus.ToplamMesafeKm km / @Model.Donus.TahminiSureDk dk</p>
+                        <p class="mb-3"><strong>Toplam:</strong> @Model.Donus.ToplamMesafeKm.ToString("0") km / @Model.Donus.TahminiSureDk dk</p>
                         <table class="table table-sm table-striped">
-                            <thead><tr><th>Sıra</th><th>Personel</th><th>Bırakış</th></tr></thead>
+                            <thead><tr><th>Sıra</th><th>Personel</th><th>Telefon</th><th>Adres</th><th>Bırakış</th></tr></thead>
                             <tbody>
                                 @foreach (var durak in Model.Donus.TumDuraklar)
                                 {
-                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.VarisSaati</td></tr>
+                                    <tr><td>@durak.SiraNo</td><td>@durak.PersonelAdSoyad</td><td>@durak.PersonelTelefon</td><td>@durak.Adres</td><td>@durak.VarisSaati</td></tr>
                                 }
                             </tbody>
                         </table>
