@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using AracServisTakipSistemi.BLL.DTOs;
+﻿using AracServisTakipSistemi.BLL.DTOs;
 using AracServisTakipSistemi.BLL.Interfaces;
-using AracServisTakipSistemi.BLL.Options;
 using AracServisTakipSistemi.Entities.Entities;
 using AracServisTakipSistemi.Entities.Enums;
 
@@ -10,7 +8,7 @@ namespace AracServisTakipSistemi.BLL.Services;
 public class RotaHesaplamaServisi
 {
     private readonly IMesafeHesaplayici _mesafeHesaplayici;
-    private readonly SirketAyarlari _sirketAyarlari;
+    private readonly ISirketAyarRepository _sirketAyarRepository;
     private const double OrtalamaHizKmSaat = 35.0;
     private const double DurakBeklemeSuresiDk = 3.0;
 
@@ -18,19 +16,21 @@ public class RotaHesaplamaServisi
     // "burada farklı bir küme başlıyor" kabul edip aracı kapasiteye kadar doldurmaya zorlamıyoruz.
     private const double DogalBoslukEsigiKm = 15.0;
 
-    public RotaHesaplamaServisi(IMesafeHesaplayici mesafeHesaplayici, IOptions<SirketAyarlari> sirketAyarlari)
+    public RotaHesaplamaServisi(IMesafeHesaplayici mesafeHesaplayici, ISirketAyarRepository sirketAyarRepository)
     {
         _mesafeHesaplayici = mesafeHesaplayici;
-        _sirketAyarlari = sirketAyarlari.Value;
+        _sirketAyarRepository = sirketAyarRepository;
     }
 
-    public RotaHesaplamaSonucu RotalariHesapla(
+    public async Task<RotaHesaplamaSonucu> RotalariHesaplaAsync(
         List<Personel> aktifPersoneller,
         List<Arac> aktifAraclar,
         List<Bolge> aktifBolgeler,
         List<Vardiya> aktifVardiyalar,
         Dictionary<int, PersonelAdres> personelAdresSozlugu)
     {
+        var ayarlar = await _sirketAyarRepository.GetirAsync();
+
         var genelSonuc = new RotaHesaplamaSonucu();
         var calisanlar = aktifPersoneller.Where(p => p.PersonelTuru == PersonelTuru.Calisan).ToList();
 
@@ -38,15 +38,15 @@ public class RotaHesaplamaServisi
         if (bolgesizPersonel.Count > 0)
             genelSonuc.Uyarilar.Add($"{bolgesizPersonel.Count} personel hiçbir bölgeye atanmamış.");
 
-        if (_sirketAyarlari.Enlem == 0 && _sirketAyarlari.Boylam == 0)
-            genelSonuc.Uyarilar.Add("Şirket konumu tanımlanmamış (appsettings.json > SirketAyarlari) — rota hesaplaması hatalı olabilir.");
+        if (ayarlar.Enlem == 0 && ayarlar.Boylam == 0)
+            genelSonuc.Uyarilar.Add("Şirket konumu tanımlanmamış (Admin > Ayarlar ekranından girin) — rota hesaplaması hatalı olabilir.");
 
         foreach (var vardiya in aktifVardiyalar)
         {
             var vardiyaPersonelleri = calisanlar.Where(p => p.VardiyaId == vardiya.Id && p.BolgeId != null).ToList();
             if (vardiyaPersonelleri.Count == 0) continue;
 
-            var vardiyaSonucu = TekVardiyaIcinHesapla(vardiyaPersonelleri, aktifAraclar, aktifBolgeler, vardiya, personelAdresSozlugu);
+            var vardiyaSonucu = TekVardiyaIcinHesapla(vardiyaPersonelleri, aktifAraclar, aktifBolgeler, vardiya, personelAdresSozlugu, ayarlar);
 
             genelSonuc.Rotalar.AddRange(vardiyaSonucu.Rotalar);
             genelSonuc.BeklemedeKalanPersoneller.AddRange(vardiyaSonucu.BeklemedeKalanPersoneller);
@@ -68,10 +68,11 @@ public class RotaHesaplamaServisi
         List<Arac> araclar,
         List<Bolge> bolgeler,
         Vardiya vardiya,
-        Dictionary<int, PersonelAdres> adresSozlugu)
+        Dictionary<int, PersonelAdres> adresSozlugu,
+        SirketAyar ayarlar)
     {
         var sonuc = new RotaHesaplamaSonucu();
-        var sirketKonumu = (_sirketAyarlari.Enlem, _sirketAyarlari.Boylam);
+        var sirketKonumu = (ayarlar.Enlem, ayarlar.Boylam);
 
         var koordinatiEksik = personeller.Where(p => !adresSozlugu.ContainsKey(p.Id)
             || adresSozlugu[p.Id].Enlem == null || adresSozlugu[p.Id].Boylam == null).ToList();
@@ -174,7 +175,7 @@ public class RotaHesaplamaServisi
                 var gidisToplamDk = gidisKumulatifDk[^1] + sonBacakDk;
 
                 // Şirkete, vardiya başlangıcından X dk önce varılmalı → kalkış saati geriye doğru hesaplanır
-                var sirketVarisSaati = vardiya.BaslangicSaati.Subtract(TimeSpan.FromMinutes(_sirketAyarlari.GidisVarisTamponDk));
+                var sirketVarisSaati = vardiya.BaslangicSaati.Subtract(TimeSpan.FromMinutes(ayarlar.GidisVarisTamponDk));
                 var gidisKalkisSaati = sirketVarisSaati.Subtract(TimeSpan.FromMinutes(gidisToplamDk));
                 var gidisVarisSaatleri = gidisKumulatifDk.Select(dk => gidisKalkisSaati.Add(TimeSpan.FromMinutes(dk))).ToList();
 
@@ -200,7 +201,7 @@ public class RotaHesaplamaServisi
                 var donusKumulatifDk = KumulatifSureHesapla(donusSirasi, sirketKonumu, adresSozlugu);
                 var donusKumulatifKm = KumulatifMesafeHesapla(donusSirasi, sirketKonumu, adresSozlugu);
 
-                var donusKalkisSaati = vardiya.BitisSaati.Add(TimeSpan.FromMinutes(_sirketAyarlari.DonusKalkisTamponDk));
+                var donusKalkisSaati = vardiya.BitisSaati.Add(TimeSpan.FromMinutes(ayarlar.DonusKalkisTamponDk));
                 var donusVarisSaatleri = donusKumulatifDk.Select(dk => donusKalkisSaati.Add(TimeSpan.FromMinutes(dk))).ToList();
 
                 sonuc.Rotalar.Add(new RotaSonucu
@@ -269,47 +270,47 @@ public class RotaHesaplamaServisi
 
     // Başlangıç noktasından (şoför evi ya da şirket) her durağa varana kadar geçen kümülatif süre (dk)
     private List<double> KumulatifSureHesapla(
-    List<Personel> siraliListe,
-    (double Enlem, double Boylam) baslangic,
-    Dictionary<int, PersonelAdres> adresSozlugu)
-{
-    var sonuc = new List<double>();
-
-    if (siraliListe.Count == 0)
-        return sonuc;
-
-    var ilkAdres = adresSozlugu[siraliListe[0].Id];
-
-    double kumulatifKm = _mesafeHesaplayici.MesafeHesaplaKm(
-        baslangic.Enlem,
-        baslangic.Boylam,
-        ilkAdres.Enlem!.Value,
-        ilkAdres.Boylam!.Value);
-
-    double kumulatifDk = kumulatifKm / OrtalamaHizKmSaat * 60;
-
-    sonuc.Add(kumulatifDk);
-
-    for (int i = 0; i < siraliListe.Count - 1; i++)
+        List<Personel> siraliListe,
+        (double Enlem, double Boylam) baslangic,
+        Dictionary<int, PersonelAdres> adresSozlugu)
     {
-        var a1 = adresSozlugu[siraliListe[i].Id];
-        var a2 = adresSozlugu[siraliListe[i + 1].Id];
+        var sonuc = new List<double>();
 
-        kumulatifKm += _mesafeHesaplayici.MesafeHesaplaKm(
-            a1.Enlem!.Value,
-            a1.Boylam!.Value,
-            a2.Enlem!.Value,
-            a2.Boylam!.Value);
+        if (siraliListe.Count == 0)
+            return sonuc;
 
-        kumulatifDk =
-            kumulatifKm / OrtalamaHizKmSaat * 60
-            + ((i + 1) * DurakBeklemeSuresiDk);
+        var ilkAdres = adresSozlugu[siraliListe[0].Id];
+
+        double kumulatifKm = _mesafeHesaplayici.MesafeHesaplaKm(
+            baslangic.Enlem,
+            baslangic.Boylam,
+            ilkAdres.Enlem!.Value,
+            ilkAdres.Boylam!.Value);
+
+        double kumulatifDk = kumulatifKm / OrtalamaHizKmSaat * 60;
 
         sonuc.Add(kumulatifDk);
-    }
 
-    return sonuc;
-}
+        for (int i = 0; i < siraliListe.Count - 1; i++)
+        {
+            var a1 = adresSozlugu[siraliListe[i].Id];
+            var a2 = adresSozlugu[siraliListe[i + 1].Id];
+
+            kumulatifKm += _mesafeHesaplayici.MesafeHesaplaKm(
+                a1.Enlem!.Value,
+                a1.Boylam!.Value,
+                a2.Enlem!.Value,
+                a2.Boylam!.Value);
+
+            kumulatifDk =
+                kumulatifKm / OrtalamaHizKmSaat * 60
+                + ((i + 1) * DurakBeklemeSuresiDk);
+
+            sonuc.Add(kumulatifDk);
+        }
+
+        return sonuc;
+    }
 
     private double KumulatifMesafeHesapla(List<Personel> siraliListe, (double Enlem, double Boylam) baslangic, Dictionary<int, PersonelAdres> adresSozlugu)
     {

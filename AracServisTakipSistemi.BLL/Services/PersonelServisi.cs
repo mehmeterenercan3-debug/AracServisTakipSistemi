@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using AracServisTakipSistemi.BLL.Interfaces;
-using AracServisTakipSistemi.BLL.Options;
+﻿using AracServisTakipSistemi.BLL.Interfaces;
 using AracServisTakipSistemi.Entities.Entities;
 
 namespace AracServisTakipSistemi.BLL.Services;
@@ -12,7 +10,7 @@ public class PersonelServisi
     private readonly IGeocodingServisi _geocodingServisi;
     private readonly IBolgeRepository _bolgeRepository;
     private readonly IMesafeHesaplayici _mesafeHesaplayici;
-    private readonly SirketAyarlari _sirketAyarlari;
+    private readonly ISirketAyarRepository _sirketAyarRepository;
 
     public PersonelServisi(
         IPersonelRepository repository,
@@ -20,14 +18,14 @@ public class PersonelServisi
         IGeocodingServisi geocodingServisi,
         IBolgeRepository bolgeRepository,
         IMesafeHesaplayici mesafeHesaplayici,
-        IOptions<SirketAyarlari> sirketAyarlari)
+        ISirketAyarRepository sirketAyarRepository)
     {
         _repository = repository;
         _adresRepository = adresRepository;
         _geocodingServisi = geocodingServisi;
         _bolgeRepository = bolgeRepository;
         _mesafeHesaplayici = mesafeHesaplayici;
-        _sirketAyarlari = sirketAyarlari.Value;
+        _sirketAyarRepository = sirketAyarRepository;
     }
 
     public Task<List<Personel>> TumPersonelleriGetirAsync() => _repository.TumunuGetirAsync();
@@ -160,7 +158,7 @@ public class PersonelServisi
         return (false, $"Adres otomatik bulunamadı ({sonuc.HataMesaji}). Bölge ataması yapılamadı.");
     }
 
-    // Bulunan koordinat, en yakın bölgeden bile çok uzaksa (SirketAyarlari.MaksimumBolgeMesafesiKm)
+    // Bulunan koordinat, en yakın bölgeden bile çok uzaksa (SirketAyar.MaksimumBolgeMesafesiKm)
     // atama YAPMIYORUZ — bu genelde adresin eksik/hatalı girilmesinden ya da geocoding'in
     // alakasız bir yere yanlış eşleşmesinden kaynaklanır (örn. "a a a a" gibi anlamsız girdi).
     private async Task<(bool Basarili, string? Uyari)> EnYakinBolgeyeAtaAsync(Personel personel, double enlem, double boylam)
@@ -176,11 +174,12 @@ public class PersonelServisi
             .First();
 
         var mesafeKm = _mesafeHesaplayici.MesafeHesaplaKm(enlem, boylam, enYakinBolge.MerkezEnlem!.Value, enYakinBolge.MerkezBoylam!.Value);
+        var ayarlar = await _sirketAyarRepository.GetirAsync();
 
-        if (mesafeKm > _sirketAyarlari.MaksimumBolgeMesafesiKm)
+        if (mesafeKm > ayarlar.MaksimumBolgeMesafesiKm)
         {
             return (false, $"Bulunan konum en yakın bölgeye ({enYakinBolge.BolgeAdi}) {mesafeKm:F0} km uzaklıkta — " +
-                $"bu, kabul edilen sınırın ({_sirketAyarlari.MaksimumBolgeMesafesiKm:F0} km) çok üzerinde. " +
+                $"bu, kabul edilen sınırın ({ayarlar.MaksimumBolgeMesafesiKm:F0} km) çok üzerinde. " +
                 "Adres muhtemelen eksik/hatalı girilmiş, lütfen adresi kontrol edip düzenleyin.");
         }
 

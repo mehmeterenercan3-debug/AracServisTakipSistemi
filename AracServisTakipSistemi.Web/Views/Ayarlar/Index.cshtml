@@ -1,0 +1,62 @@
+@model AracServisTakipSistemi.Entities.Entities.SirketAyar
+@{
+    ViewData["Title"] = "Şirket Ayarları";
+}
+
+<h2>Şirket Ayarları</h2>
+<p class="text-muted">Bu ayarlar, gidiş/dönüş rota hesaplamasında ve bölge atamasında kullanılıyor.</p>
+
+@if (TempData["Basari"] != null)
+{
+    <div class="alert alert-success">@TempData["Basari"]</div>
+}
+@if (TempData["Hata"] != null)
+{
+    <div class="alert alert-danger">@TempData["Hata"]</div>
+}
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-body">
+        <form asp-controller="Ayarlar" asp-action="Guncelle" method="post">
+            <div class="mb-3">
+                <label class="form-label">Şirket / Ofis Adı</label>
+                <input class="form-control" type="text" name="Ad" value="@Model.Ad" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Merkez Enlem</label>
+                    <input class="form-control" type="number" step="0.000001" name="Enlem" value="@Model.Enlem" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Merkez Boylam</label>
+                    <input class="form-control" type="number" step="0.000001" name="Boylam" value="@Model.Boylam" />
+                </div>
+            </div>
+            <p class="text-muted small">Google Maps'te şirket konumuna sağ tıklayıp koordinatları kopyalayabilirsiniz.</p>
+
+            <hr />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Gidiş Varış Tamponu (dk)</label>
+                    <input class="form-control" type="number" name="GidisVarisTamponDk" value="@Model.GidisVarisTamponDk" />
+                    <p class="text-muted small mb-0">Personel, vardiya başlangıcından kaç dk önce şirkette olmalı.</p>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Dönüş Kalkış Tamponu (dk)</label>
+                    <input class="form-control" type="number" name="DonusKalkisTamponDk" value="@Model.DonusKalkisTamponDk" />
+                    <p class="text-muted small mb-0">Şoför, vardiya bitişinden kaç dk sonra şirketten ayrılır.</p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Maksimum Bölge Mesafesi (km)</label>
+                <input class="form-control" type="number" step="0.1" name="MaksimumBolgeMesafesiKm" value="@Model.MaksimumBolgeMesafesiKm" />
+                <p class="text-muted small mb-0">Bir personelin adresi, en yakın bölgeye bu mesafeden uzaksa bölge ataması yapılmaz.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </form>
+    </div>
+</div>

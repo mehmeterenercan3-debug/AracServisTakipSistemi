@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<RotaDuragi> RotaDuraklari => Set<RotaDuragi>();
     public DbSet<SemtReferans> SemtReferanslari => Set<SemtReferans>();
     public DbSet<Vardiya> Vardiyalar => Set<Vardiya>();
+    public DbSet<SirketAyar> SirketAyarlari => Set<SirketAyar>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -77,6 +78,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         modelBuilder.Entity<Vardiya>().HasData(
             new Vardiya { Id = 1, VardiyaAdi = "Sabah", BaslangicSaati = new TimeSpan(8, 30, 0), BitisSaati = new TimeSpan(18, 0, 0) }
+        );
+
+        // Şirket ayarlarının ilk (ve tek) satırı — mevcut appsettings.json'daki değerlerle aynı,
+        modelBuilder.Entity<SirketAyar>().HasData(
+            new SirketAyar
+            {
+                Id = 1,
+                Ad = "Merkez Ofis",
+                Enlem = 41.020184446800286,
+                Boylam = 28.889399539926625,
+                GidisVarisTamponDk = 15,
+                DonusKalkisTamponDk = 15,
+                MaksimumBolgeMesafesiKm = 100
+            }
         );
     }
 }

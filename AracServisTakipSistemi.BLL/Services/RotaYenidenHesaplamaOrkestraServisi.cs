@@ -45,7 +45,7 @@ public class RotaYenidenHesaplamaOrkestraServisi
             .Distinct().ToList();
         var adresSozlugu = await _personelAdresRepository.AktifAdresleriGetirAsync(ilgiliIdler);
 
-        var sonuc = _rotaHesaplamaServisi.RotalariHesapla(aktifPersoneller, aktifAraclar, aktifBolgeler, aktifVardiyalar, adresSozlugu);
+        var sonuc = await _rotaHesaplamaServisi.RotalariHesaplaAsync(aktifPersoneller, aktifAraclar, aktifBolgeler, aktifVardiyalar, adresSozlugu);
 
         // Eski rota kayıtlarını tamamen sil
         await _rotaRepository.EskiRotalariSilAsync();

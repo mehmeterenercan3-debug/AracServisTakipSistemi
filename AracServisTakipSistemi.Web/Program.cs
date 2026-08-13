@@ -41,14 +41,14 @@ builder.Services.AddScoped<ISemtReferansRepository, SemtReferansRepository>();
 builder.Services.AddScoped<IVardiyaRepository, VardiyaRepository>();
 builder.Services.AddScoped<IBolgeRepository, BolgeRepository>();
 builder.Services.AddScoped<IRotaRepository, RotaRepository>();
+builder.Services.AddScoped<ISirketAyarRepository, SirketAyarRepository>();
 builder.Services.AddScoped<IAracArizaKaydiRepository, AracArizaKaydiRepository>();
 builder.Services.AddScoped<IBakimKaydiRepository, BakimKaydiRepository>();
 
 // Servisler
 builder.Services.AddScoped<IMesafeHesaplayici, HaversineMesafeHesaplayici>();
 builder.Services.AddHttpClient<IGeocodingServisi, NominatimGeocodingServisi>();
-builder.Services.Configure<AracServisTakipSistemi.BLL.Options.SirketAyarlari>(
-    builder.Configuration.GetSection("SirketAyarlari"));
+// Şirket ayarları artık appsettings.json değil, veritabanı (SirketAyar tablosu) üzerinden yönetiliyor
 builder.Services.AddScoped<RotaHesaplamaServisi>();
 builder.Services.AddScoped<PersonelServisi>();
 builder.Services.AddScoped<AracServisi>();
@@ -57,6 +57,7 @@ builder.Services.AddScoped<SemtReferansServisi>();
 builder.Services.AddScoped<BolgeServisi>();
 builder.Services.AddScoped<RotaYenidenHesaplamaOrkestraServisi>();
 builder.Services.AddScoped<VardiyaServisi>();
+builder.Services.AddScoped<SirketAyarServisi>();
 builder.Services.AddScoped<RotaServisi>();
 builder.Services.AddScoped<AracArizaKaydiServisi>();
 builder.Services.AddScoped<BakimKaydiServisi>();
