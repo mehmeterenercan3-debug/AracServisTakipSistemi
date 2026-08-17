@@ -22,6 +22,8 @@ public class AracServisi
 
     public Task<List<Arac>> AktifAraclariGetirAsync() => _repository.AktifleriGetirAsync();
 
+    public Task<List<Arac>> TumAraclariMaliyetVerisiyleGetirAsync() => _repository.TumunuMaliyetVerisiyleGetirAsync();
+
     public Task<Arac?> AracGetirAsync(int id) => _repository.IdIleGetirAsync(id);
 
     // Şoför paneli için — bu personelin şoförü olduğu aracı bul

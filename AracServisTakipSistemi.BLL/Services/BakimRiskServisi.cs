@@ -74,6 +74,17 @@ public class BakimRiskServisi
         if (arac.SigortaBitisTarihi.HasValue && arac.SigortaBitisTarihi.Value < DateTime.Now.AddDays(30))
             oneriler.Add("Sigorta bitiş tarihi yaklaşıyor veya geçmiş — yenileme kontrolü yapılmalı.");
 
+        // En son bakımda planlanan "sonraki bakım" zamanı/km'si geçildiyse uyar
+        var sonBakim = arac.BakimKayitlari.OrderByDescending(b => b.BakimTarihi).FirstOrDefault();
+        if (sonBakim != null)
+        {
+            if (sonBakim.SonrakiBakimKm.HasValue && arac.GuncelKm >= sonBakim.SonrakiBakimKm.Value)
+                oneriler.Add($"Planlanan sonraki bakım km'si ({sonBakim.SonrakiBakimKm:N0}) geçildi — aracın güncel km'si {arac.GuncelKm:N0}, bakım zamanı gelmiş.");
+ 
+            if (sonBakim.SonrakiBakimTarihi.HasValue && sonBakim.SonrakiBakimTarihi.Value < DateTime.Now)
+                oneriler.Add($"Planlanan sonraki bakım tarihi ({sonBakim.SonrakiBakimTarihi.Value:dd.MM.yyyy}) geçti — bakım planlanmalı.");
+        }
+ 
         if (oneriler.Count == 0)
             oneriler.Add("Şu an için özel bir risk görülmüyor, standart periyodik bakım yeterli.");
 

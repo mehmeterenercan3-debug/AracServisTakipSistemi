@@ -1,0 +1,105 @@
+@model AracServisTakipSistemi.Web.Models.MaliyetRaporuViewModel
+@{
+    ViewData["Title"] = "Maliyet Raporu";
+}
+
+<h2>Maliyet / Verimlilik Raporu</h2>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Bu Ay Toplam Bakım Maliyeti</h5>
+                <p class="card-text fs-3">@Model.BuAyToplamMaliyet.ToString("N0") TL</p>
+                <p class="card-text small mb-0">Arıza: @Model.BuAyArizaMaliyeti.ToString("N0") TL &nbsp;|&nbsp; Bakım: @Model.BuAyBakimMaliyeti.ToString("N0") TL</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">Toplam Maliyet (Tüm Zamanlar)</h5>
+                <p class="card-text fs-3">@Model.FiloToplamMaliyeti.ToString("N0") TL</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-dark">
+            <div class="card-body">
+                <h5 class="card-title">Ortalama Km Başına Maliyet</h5>
+                <p class="card-text fs-3">@Model.FiloOrtalamaKmBasinaMaliyet.ToString("N2") TL/km</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title">En Maliyetli 3 Araç</h5>
+        @if (!Model.EnMaliyetliUcArac.Any())
+        {
+            <p class="text-muted mb-0">Henüz maliyet verisi yok.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr><th>#</th><th>Plaka</th><th>Marka/Model</th><th>Toplam Maliyet</th><th>Km Başına Maliyet</th></tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.EnMaliyetliUcArac.Count; i++)
+                    {
+                        var arac = Model.EnMaliyetliUcArac[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>@arac.Plaka</td>
+                            <td>@arac.MarkaModel</td>
+                            <td><strong>@arac.ToplamMaliyet.ToString("N0") TL</strong></td>
+                            <td>@arac.KmBasinaMaliyet.ToString("N2") TL/km</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title">Tüm Araçlar — Maliyet Detayı</h5>
+        @if (!Model.TumAraclarMaliyetDetayi.Any())
+        {
+            <p class="text-muted mb-0">Henüz araç kaydı yok.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Plaka</th>
+                        <th>Marka/Model</th>
+                        <th>Güncel Km</th>
+                        <th>Arıza Sayısı</th>
+                        <th>Bakım Sayısı</th>
+                        <th>Toplam Maliyet</th>
+                        <th>Km Başına Maliyet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var arac in Model.TumAraclarMaliyetDetayi)
+                    {
+                        <tr>
+                            <td>@arac.Plaka</td>
+                            <td>@arac.MarkaModel</td>
+                            <td>@arac.GuncelKm.ToString("N0")</td>
+                            <td>@arac.ArizaSayisi</td>
+                            <td>@arac.BakimSayisi</td>
+                            <td>@arac.ToplamMaliyet.ToString("N0") TL</td>
+                            <td>@arac.KmBasinaMaliyet.ToString("N2") TL/km</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

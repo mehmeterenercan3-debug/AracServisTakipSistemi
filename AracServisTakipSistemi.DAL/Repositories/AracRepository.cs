@@ -37,8 +37,15 @@ public class AracRepository : IAracRepository
         await _context.Araclar
             .Include(a => a.ArizaKayitlari)
             .Include(a => a.RiskSkorlari)
+            .Include(a => a.BakimKayitlari)
             .Include(a => a.SoforPersonel)
             .FirstOrDefaultAsync(a => a.Id == id);
+
+    public async Task<List<Arac>> TumunuMaliyetVerisiyleGetirAsync() =>
+        await _context.Araclar
+            .Include(a => a.ArizaKayitlari)
+            .Include(a => a.BakimKayitlari)
+            .ToListAsync();
 
     public async Task EkleAsync(Arac arac) => await _context.Araclar.AddAsync(arac);
 

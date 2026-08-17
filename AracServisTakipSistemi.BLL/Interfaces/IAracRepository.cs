@@ -13,6 +13,9 @@ public interface IAracRepository
     Task<List<Arac>> TumunuGetirAsync();
     Task<List<Arac>> AktifleriGetirAsync();
     Task<Arac?> IdIleGetirAsync(int id);
+
+    // Maliyet raporu için — arıza ve bakım kayıtlarını da yükler.
+    Task<List<Arac>> TumunuMaliyetVerisiyleGetirAsync();
     Task EkleAsync(Arac arac);
     Task GuncelleAsync(Arac arac);
     Task<bool> SilAsync(int id);

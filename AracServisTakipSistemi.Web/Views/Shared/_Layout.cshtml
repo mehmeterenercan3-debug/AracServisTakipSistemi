@@ -197,6 +197,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "MaliyetRaporu" ? "active" : "")" asp-controller="MaliyetRaporu" asp-action="Index">
+                        <i class="bi bi-cash-coin"></i> Maliyet Raporu
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Ayarlar" ? "active" : "")" asp-controller="Ayarlar" asp-action="Index">
                         <i class="bi bi-gear"></i> Ayarlar
                     </a>

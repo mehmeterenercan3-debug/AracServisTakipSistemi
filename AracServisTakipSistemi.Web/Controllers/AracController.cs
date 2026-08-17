@@ -118,6 +118,19 @@ public class AracController : Controller
         var arac = await _aracServisi.AracGetirAsync(Id);
         if (arac == null) return NotFound();
 
+        // Güncel km, aracın en yüksek arıza-anındaki-km değerinden düşük olamaz —
+        // yoksa geçmişte "gelecekte yaşanmış" bir arıza kaydı gibi tutarsız bir durum oluşur.
+        if (arac.ArizaKayitlari.Any())
+        {
+            var enYuksekArizaKm = arac.ArizaKayitlari.Max(a => a.ArizaAnindakiKm);
+            if (GuncelKm < enYuksekArizaKm)
+            {
+                TempData["Hata"] = $"Güncel km ({GuncelKm:N0}), bu araca ait bir arıza kaydındaki km'den ({enYuksekArizaKm:N0}) düşük olamaz. " +
+                    "Lütfen km değerini kontrol edin.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
         arac.Plaka = Plaka;
         arac.Marka = Marka;
         arac.Model = Model;
@@ -199,6 +212,16 @@ public class AracController : Controller
         [FromForm] decimal OnarimMaliyeti,
         [FromForm] double ArizaAnindakiKm)
     {
+        // Arızanın "o anki" kilometresi, aracın ŞU ANKİ kilometresinden büyük olamaz —
+        // km sadece artar, geçmişte yaşanmış bir olay gelecekteki bir km değerinde olamaz.
+        var arac = await _aracServisi.AracGetirAsync(AracId);
+        if (arac != null && ArizaAnindakiKm > arac.GuncelKm)
+        {
+            TempData["Hata"] = $"Arıza anındaki km ({ArizaAnindakiKm:N0}), aracın güncel km'sinden ({arac.GuncelKm:N0}) büyük olamaz. " +
+                "Ya arıza km'sini kontrol edin, ya da önce aracın güncel km'sini güncelleyin.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var kayit = new AracArizaKaydi
         {
             AracId = AracId,
